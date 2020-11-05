@@ -2,10 +2,6 @@ from zquantum.core.interfaces.ansatz import Ansatz, ansatz_property
 from zquantum.core.circuit import Circuit, Qubit, create_layer_of_gates
 from zquantum.core.evolution import time_evolution
 from zquantum.core.circuit._circuit import save_circuit, load_circuit
-from .utils import create_all_x_mixer_hamiltonian
-from openfermion import QubitOperator, IsingOperator
-from openfermion.utils import count_qubits
-from forestopenfermion import qubitop_to_pyquilpauli
 from typing import Union, Optional, List
 import numpy as np
 import sympy
@@ -21,8 +17,8 @@ class PLAnsatz(Ansatz):
 
     def __init__(
         self,
-        number_of_layers: int = 1,
-        circuit_str : str
+        circuit_str : str,
+        number_of_layers: int = 1
     ):
         """Arbitrary Ansatz class represented as an OpenQASM string.
 
@@ -87,15 +83,6 @@ class PLAnsatz(Ansatz):
         # Prepare initial state
         circuit += create_layer_of_gates(self.number_of_qubits, "H")
 
-        symbols = self.get_symbols()
-        # Add time evolution layers
-        pyquil_cost_hamiltonian = qubitop_to_pyquilpauli(self._cost_hamiltonian)
-        pyquil_mixer_hamiltonian = qubitop_to_pyquilpauli(self._mixer_hamiltonian)
-
-        for i in range(self.number_of_layers):
-            circuit += time_evolution(pyquil_cost_hamiltonian, symbols[2 * i + 1])
-            circuit += time_evolution(pyquil_mixer_hamiltonian, symbols[2 * i])
-            
         return circuit
 
     @overrides
@@ -115,6 +102,6 @@ import qiskit
 
 def create_circuit_from_qasm(circuit: str):
     """Creates an Orquestra core Circuit object from an OpenQASM string."""
-    qc = QuantumCircuit.from_qasm_str(qasm_str)
+    qc = QuantumCircuit.from_qasm_str(circuit)
     zcircuit = Circuit(qc)
     save_circuit(zcircuit, "circuit.json")
