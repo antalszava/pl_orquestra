@@ -1,5 +1,5 @@
 import pytest
-import ansatz
+import parse
 
 openqasm_str = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\nry(0.4) q[0];\nmeasure q[0] -> c[0];\nmeasure q[1] -> c[1];\n'
 
@@ -8,6 +8,6 @@ serialized_circuit = {"schema": "zapata-v1-circuit", "name": "circuit0", "gates"
 class TestPLAnsatz:
     def test_parse(self, monkeypatch):
         local_list = []
-        monkeypatch.setattr(ansatz, "save_circuit", lambda circuit, file_name: local_list.append(circuit))
-        ansatz.create_circuit_from_qasm(openqasm_str)
+        monkeypatch.setattr(parse, "save_circuit", lambda circuit, file_name: local_list.append(circuit))
+        parse.create_circuit_from_qasm(openqasm_str)
         assert local_list[0].to_dict(serialize_gate_params=True) == serialized_circuit
