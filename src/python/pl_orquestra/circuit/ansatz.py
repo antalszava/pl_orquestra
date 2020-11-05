@@ -1,7 +1,7 @@
 from zquantum.core.interfaces.ansatz import Ansatz, ansatz_property
 from zquantum.core.circuit import Circuit, Qubit, create_layer_of_gates
 from zquantum.core.evolution import time_evolution
-
+from zquantum.core.circuit._circuit import save_circuit, load_circuit
 from .utils import create_all_x_mixer_hamiltonian
 from openfermion import QubitOperator, IsingOperator
 from openfermion.utils import count_qubits
@@ -12,7 +12,6 @@ import sympy
 from overrides import overrides
 
 from qiskit import QuantumCircuit
-
 
 class PLAnsatz(Ansatz):
 
@@ -111,3 +110,11 @@ class PLAnsatz(Ansatz):
             symbols.append(sympy.Symbol("beta_" + str(i)))
             symbols.append(sympy.Symbol("gamma_" + str(i)))
         return symbols
+
+import qiskit
+
+def create_circuit_from_qasm(circuit: str):
+    """Creates an Orquestra core Circuit object from an OpenQASM string."""
+    qc = QuantumCircuit.from_qasm_str(qasm_str)
+    zcircuit = Circuit(qc)
+    save_circuit(zcircuit, "circuit.json")
