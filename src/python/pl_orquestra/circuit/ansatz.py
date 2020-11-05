@@ -105,3 +105,6 @@ def create_circuit_from_qasm(circuit: str):
     qc = QuantumCircuit.from_qasm_str(circuit)
     zcircuit = Circuit(qc)
     save_circuit(zcircuit, "circuit.json")
+
+def empty_func():
+    pass
