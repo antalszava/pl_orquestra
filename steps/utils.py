@@ -5,7 +5,8 @@ def sum_func(pos_arg, **kwargs):
     terms = list(kwargs.values())
 
     res += sum(terms)
-    save_json(str(res), "result.json")
+    result = {'res': str(res)}
+    save_json(result, "result.json")
     
 
 # The following is used from an Orquestra tutorial

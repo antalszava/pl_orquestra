@@ -7,4 +7,4 @@ class TestPLAnsatz:
         local_list = []
         monkeypatch.setattr(utils, "save_json", lambda result, file_name: local_list.append(result))
         utils.sum_func(1, a=2, b=3, c=4)
-        assert local_list[0] == '10'
+        assert local_list[0]["res"] == '10'
