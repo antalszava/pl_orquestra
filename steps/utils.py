@@ -33,3 +33,14 @@ def save_json(result, filename) -> None:
 
     except IOError:
         print(f'Error: Could not open {filename}')
+
+class NumpyArrayEncoder(JSONEncoder):
+    """
+    Aux classes for decoding NumPy arrays to Python objects.
+    Returns:
+        A list or a JSONEnconder object.
+    """
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
