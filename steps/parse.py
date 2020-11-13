@@ -7,7 +7,12 @@ import numpy as np
 import sympy
 from overrides import overrides
 
-from qiskit import QuantumCircuit
+from qiskit import(
+  QuantumCircuit,
+  execute,
+  Aer)
+
+from utils import save_json
 
 
 def create_circuit_from_qasm(circuit: str):
@@ -25,3 +30,18 @@ def create_circuit():
 
 def empty_func():
     pass
+
+def execute_qiskit(circuit):
+    """Executes an OpenQASM string using the QasmSimulator backend."""
+    qc = QuantumCircuit.from_qasm_str(circuit)
+
+    # Run the quantum circuit on a statevector simulator backend
+    backend = Aer.get_backend('qasm_simulator')
+
+    # Create a Quantum Program for execution
+    job = execute(qc, backend)
+
+    result = job.result()
+    counts = result.get_counts()
+
+    save_json(counts, "results.json")
