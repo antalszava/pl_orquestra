@@ -26,7 +26,7 @@ setuptools.setup(
         "qiskit-ibmq-provider==0.6.1",
         "pyquil==2.17.0",
         "numpy>=1.18.1",
-        "z-quantum-core",
-        "qe-openfermion",
+        #"z-quantum-core",
+        #"qe-openfermion",
     ],
 )
