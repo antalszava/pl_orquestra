@@ -12,7 +12,7 @@ from qiskit import(
   execute,
   Aer)
 
-from utils import save_json
+from pl_orquestra.utils import save_json
 
 
 def create_circuit_from_qasm(circuit: str):
