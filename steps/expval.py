@@ -23,7 +23,6 @@ def run_circuit_and_get_expval(
         )
 
     backend = create_object(backend_specs)
-    circuit = load_circuit(circuit)
 
     # 1. Parse circuit
     qc = QuantumCircuit.from_qasm_str(circuit)
