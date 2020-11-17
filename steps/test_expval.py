@@ -16,7 +16,6 @@ class TestExpvalExact:
 
         lst = []
 
-        monkeypatch.setattr(expval, "load_circuit", lambda circuit: circuit)
         monkeypatch.setattr(expval, "save_value_estimate", lambda val, name: lst.append(val))
 
         expval.run_circuit_and_get_expval(backend_specs, only_measure_qasm, target_op)
@@ -32,7 +31,6 @@ class TestExpvalExact:
 
         lst = []
 
-        monkeypatch.setattr(expval, "load_circuit", lambda circuit: circuit)
         monkeypatch.setattr(expval, "save_value_estimate", lambda val, name: lst.append(val))
 
         expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, target_op)

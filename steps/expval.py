@@ -1,7 +1,6 @@
 import json
 from zquantum.core.utils import create_object, save_value_estimate, ValueEstimate
 from openfermion import QubitOperator, SymbolicOperator, IsingOperator
-from zquantum.core.circuit._circuit import save_circuit, load_circuit
 from zquantum.core.circuit import Circuit
 
 from qiskit import QuantumCircuit
