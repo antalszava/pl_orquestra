@@ -64,7 +64,7 @@ def expval_template(backend_component, backend_specs, qasm_circuit, operator_str
     expval_template['steps'][0]['inputs'] = []
     expval_template['steps'][0]['inputs'].append({'backend_specs': backend_specs, 'type': 'string'})
     expval_template['steps'][0]['inputs'].append({'noise_model': noise_model, 'type': 'noise-model'})
-    expval_template['steps'][0]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device_connectivity'})
+    expval_template['steps'][0]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device-connectivity'})
     expval_template['steps'][0]['inputs'].append({'target_operator': operator_string, 'type': 'string'})
     expval_template['steps'][0]['inputs'].append({'circuit': qasm_circuit, 'type': 'string'})
     
