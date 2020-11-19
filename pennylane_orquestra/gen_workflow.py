@@ -4,7 +4,33 @@ forest_import = {'name': 'qe-forest',
     'branch': 'dev'}
   }
 
-backend_import_db = lambda backend_component: {'qe-forest': forest_import}
+
+qiskit_import = {'name': 'qe-qiskit',
+   'type': 'git',
+   'parameters': {'repository': 'git@github.com:zapatacomputing/qe-qiskit.git',
+    'branch': 'dev'}
+  }
+
+qhipster_import = {'name': 'qe-qhipster',
+   'type': 'git',
+   'parameters': {'repository': 'git@github.com:zapatacomputing/qe-qhipster.git',
+    'branch': 'dev'}
+  }
+
+qulacs_import = {'name': 'qe-qulacs',
+   'type': 'git',
+   'parameters': {'repository': 'git@github.com:zapatacomputing/qe-qulacs.git',
+    'branch': 'dev'}
+  }
+
+backend_import_db = {
+        'qe-forest': forest_import,
+        'qe-qhipster': qhipster_import,
+        'qe-qiskit': qiskit_import,
+        'qe-qulacs': qulacs_import
+        }
+
+get_backend_import = lambda backend_component: backend_import_db[backend_component]
 
 def expval_template(backend_component, backend_specs, qasm_circuit, operator_string, noise_model=None, device_connectivity=None, resources=None):
     
@@ -14,7 +40,7 @@ def expval_template(backend_component, backend_specs, qasm_circuit, operator_str
     if device_connectivity is None:
         device_connectivity = 'None'
 
-    backend_import = backend_import_db(backend_component)[backend_component]
+    backend_import = backend_import_db[backend_component]
     
     expval_template = {'apiVersion': 'io.orquestra.workflow/1.0.0',
      'name': 'expval',

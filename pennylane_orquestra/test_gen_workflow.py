@@ -6,7 +6,6 @@ import gen_workflow as gw
 from cli_actions import qe_submit
 
 # Data that are inserted into a workflow template
-backend_component = 'qe-forest'
 resources = {'cpu': '1000m', 'memory': '1Gi', 'disk': '10Gi'}
 backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 100}'
 qasm_circuit = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[2]; creg c[2]; h q[0];'
@@ -30,6 +29,7 @@ class TestWorkflowGeneration:
     def test_expval_template_can_yaml(self, tmpdir):
         """Test that filling in the workflow template for getting expectation
         values produces a valid yaml."""
+        backend_component = 'qe-forest'
 
         # Fill in workflow template
         workflow = gw.expval_template(backend_component, backend_specs, qasm_circuit, operator_string)
@@ -40,7 +40,9 @@ class TestWorkflowGeneration:
             # Testing that no errors arise here
             d = yaml.dump(workflow, file)
 
-    def test_can_submit(self, tmpdir):
+    @pytest.mark.skip(reason="TODO: remove testing submission")
+    @pytest.mark.parametrize("backend_component", list(gw.backend_import_db.keys()))
+    def test_can_submit(self, backend_component, tmpdir):
         """Test that filling in the workflow template for getting expectation
         values can be submitted to Orquestra."""
         # Skip if has not been authenticated with Orquestra
@@ -49,6 +51,8 @@ class TestWorkflowGeneration:
 
         if need_login_msg in try_resp:
             pytest.skip("Has not logged in to the Orquestra platform.")
+
+        qasm_circuit = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[1]; creg c[1];'
 
         # Fill in workflow template
         workflow = gw.expval_template(backend_component, backend_specs, qasm_circuit, operator_string)
