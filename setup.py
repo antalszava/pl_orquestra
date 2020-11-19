@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 
 setuptools.setup(
-    name="pl_orquestra",
+    name="pennylane-orquestra",
     version="0.0.1",
     author="Antal Szava",
     author_email="antalszava@gmail.com",
@@ -15,9 +15,13 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/antalszava/pl_orquestra",
     packages=[
-        "pl_orquestra",
+        "pl_component",
+        "pennylane_orquestra",
     ],
-    package_dir={"": "src/python"},
+    package_dir={
+        "pl_component": "src/python",
+        "pennylane_orquestra": "",
+        },
     classifiers=(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
