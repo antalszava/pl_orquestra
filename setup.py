@@ -1,36 +1,40 @@
-import setuptools
+from setuptools import setup, find_packages
 import os
 
-with open("README.md", "r") as f:
-    long_description = f.read()
+with open("pennylane_orquestra/_version.py") as f:
+    version = f.readlines()[-1].split()[-1].strip("\"'")
 
+requirements = []
 
-setuptools.setup(
-    name="pennylane-orquestra",
-    version="0.0.1",
-    author="Antal Szava",
-    author_email="antalszava@gmail.com",
-    description="Integrations for deploying on Orquestra",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/antalszava/pl_orquestra",
-    packages=[
-        "pl_component",
-        "pennylane_orquestra",
+info = {
+    'name': 'PennyLane-Orquestra',
+    'version': version,
+    'author': 'Antal Szava',
+    'author_email': 'antalszava@gmail.com',
+    'url': 'https://github.com/antalszava/pl_orquestra',
+    'packages': [
+        'pl_component',
+        'pennylane_orquestra',
     ],
-    package_dir={
-        "pl_component": "src/python",
-        "pennylane_orquestra": "",
-        },
-    entry_points= {
-        "pennylane.plugins": ["orquestra.qiskit = pennylane_orquestra:QeQiskitDevice",
-                              "orquestra.qiskit.ibmq = pennylane_orquestra:QeIBMQDevice",
+    'entry_points': {
+        'pennylane.plugins': ['orquestra.qiskit = pennylane_orquestra:QeQiskitDevice',
+                              'orquestra.qiskit.ibmq = pennylane_orquestra:QeIBMQDevice',
             ]
     },
-    classifiers=(
-        "Programming Language :: Python :: 3",
-        "Operating System :: OS Independent",
-    ),
-    install_requires=[
-    ],
-)
+    'description': 'PennyLane is a Python quantum machine learning library by Xanadu Inc.',
+    'long_description': open('README.md').read(),
+    'long_description_content_type': 'text/x-rst',
+    'provides': ['pennylane'],
+    'install_requires': requirements,
+    'package_dir': {
+        'pl_component': 'src/python',
+        'pennylane_orquestra': '',
+        }
+}
+
+classifiers = [
+    'Programming Language :: Python :: 3',
+    'Operating System :: OS Independent'
+]
+
+setup(classifiers=classifiers, **(info))
