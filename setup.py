@@ -22,6 +22,9 @@ setuptools.setup(
         "pl_component": "src/python",
         "pennylane_orquestra": "",
         },
+    entry_points= {
+        "pennylane.plugins": ["orquestra.device = pennylane_orquestra.orquestra_device:OrquestraDevice"]
+    },
     classifiers=(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
