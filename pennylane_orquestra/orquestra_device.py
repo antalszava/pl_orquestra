@@ -101,6 +101,20 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         data = loop_until_finished(workflow_id)
         return data
 
+
+    # TODO: finalize
+    def get_qubit_operator_repr(self):
+        from pennylane.utils import decompose_hamiltonian
+        # 1. decompose
+        decomp = decompose_hamiltonian(qml.Hadamard(wires=[0]).matrix)
+
+        observables = decomp[1]
+        for idx in range(len(observables)):
+            obs = observables[idx]
+            if not isinstance(obs, qml.operation.Tensor):
+                decomp[1][idx] = qml.operation.Tensor(obs)
+
+        _terms_to_qubit_operator(decomp[0], decomp[1])
     '''
     def apply_operations(self, operations):
         """Apply the circuit operations to the state.
