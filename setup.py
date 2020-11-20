@@ -23,7 +23,7 @@ setuptools.setup(
         "pennylane_orquestra": "",
         },
     entry_points= {
-        "pennylane.plugins": ["orquestra.device = pennylane_orquestra.orquestra_device:OrquestraDevice"]
+        "pennylane.plugins": ["orquestra.qiskit = pennylane_orquestra:OrquestraQiskitDevice"]
     },
     classifiers=(
         "Programming Language :: Python :: 3",
