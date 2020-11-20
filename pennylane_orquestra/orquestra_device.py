@@ -64,6 +64,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         pass
 
     def create_backend_specs(self, **run_kwargs):
+
+        # TODO: do we want to cache this?
         backend_specs = {}
         backend_specs["module_name"] = self.qe_module_name
         backend_specs["function_name"] = self.qe_function_name
