@@ -27,33 +27,35 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     author = "Antal Szava"
     # _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
 
-    operations = {'BasisState',
-     'CNOT',
-     'CRX',
-     'CRY',
-     'CRZ',
-     'CRot',
-     'CSWAP',
-     'CY',
-     'CZ',
-     'DiagonalQubitUnitary',
-     'Hadamard',
-     'MultiRZ',
-     'PauliX',
-     'PauliY',
-     'PauliZ',
-     'PhaseShift',
-     'QubitStateVector',
-     'QubitUnitary',
-     'RX',
-     'RY',
-     'RZ',
-     'Rot',
-     'S',
-     'SWAP',
-     'SX',
-     'T',
-     'Toffoli'}
+    operations = {
+        "BasisState",
+        "CNOT",
+        "CRX",
+        "CRY",
+        "CRZ",
+        "CRot",
+        "CSWAP",
+        "CY",
+        "CZ",
+        "DiagonalQubitUnitary",
+        "Hadamard",
+        "MultiRZ",
+        "PauliX",
+        "PauliY",
+        "PauliZ",
+        "PhaseShift",
+        "QubitStateVector",
+        "QubitUnitary",
+        "RX",
+        "RY",
+        "RZ",
+        "Rot",
+        "S",
+        "SWAP",
+        "SX",
+        "T",
+        "Toffoli",
+    }
 
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
@@ -83,7 +85,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
         if not_all_expval:
-            raise NotImplementedError('OrquestraDevice only supports returning expectation values.')
+            raise NotImplementedError("OrquestraDevice only supports returning expectation values.")
 
         self.check_validity(circuit.operations, circuit.observables)
 
@@ -105,7 +107,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         qubit_operator = self.serialize_operator(*self.circuit.observables)
 
         # 4. Create the parallel workflow file
-        workflow_file = create_parallel_workflow_file(backend_specs, qasm_circuits, qubit_operator, **run_kwargs)
+        workflow_file = create_parallel_workflow_file(
+            backend_specs, qasm_circuits, qubit_operator, **run_kwargs
+        )
 
         # 5. Submit the workflow
         workflow_id = qe_submit(workflow_file)
@@ -145,7 +149,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         """
         qasm_str = circuit.to_openqasm(rotations=self.needs_rotations)
 
-        qasm_without_measurements = re.sub('measure.*?;\n', '', qasm_str)
+        qasm_without_measurements = re.sub("measure.*?;\n", "", qasm_str)
         return qasm_without_measurements
 
     # TODO: finalize, finalize docstring
@@ -194,15 +198,15 @@ class OrquestraDevice(QubitDevice, abc.ABC):
                 acts on
 
         Returns:
-            str: the ``openfermion.IsingOperator`` string representation 
+            str: the ``openfermion.IsingOperator`` string representation
         """
-        op_wires_but_last = [f'Z{w} ' for w in wires[:-1]]
-        op_last_wire = f'Z{wires[-1]}'
-        op_str = "".join(['[', *op_wires_but_last, op_last_wire,']'])
+        op_wires_but_last = [f"Z{w} " for w in wires[:-1]]
+        op_last_wire = f"Z{wires[-1]}"
+        op_str = "".join(["[", *op_wires_but_last, op_last_wire, "]"])
         return op_str
 
     def qubitoperator_string(self, observable):
-        #TODO: docstring, examples & tests
+        # TODO: docstring, examples & tests
         accepted_obs = {"PauliX", "PauliY", "PauliZ", "Identity"}
 
         if isinstance(observable, Tensor):
