@@ -8,11 +8,13 @@ import re
 import numpy as np
 
 from pennylane import QubitDevice, DeviceError
-from pennylane.operation import Sample, Variance, Expectation, Probability, State
+from pennylane.operation import Sample, Variance, Expectation, Probability, State, Tensor
 from pennylane.ops import QubitStateVector, BasisState, QubitUnitary, CRZ, PhaseShift
 from pennylane.wires import Wires
+from pennylane.utils import decompose_hamiltonian
 
 from . import __version__
+from .utils import _terms_to_qubit_operator
 
 
 class OrquestraDevice(QubitDevice, abc.ABC):
@@ -90,10 +92,17 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # 1. Create the backend specs based on Device options and run_kwargs
         backend_specs = self.create_backend_specs(**run_kwargs)
 
-        # TODO:
-        # 2-3. Create qasm strings from the circuits & create the qubit operator
+        # 2. Create qasm strings from the circuits
         qasm_circuit = self.serialize_circuit(circuit)
-        qubit_operator = self.serialize_operator(circuit, **kwargs)
+
+        # TODO: assuming that there is a single operator: could we have a loop
+        # here for each operator specified?
+        # 3. Create the qubit operator
+
+        if len(self.circuit.observables) != 1:
+            raise NotImplementedError
+
+        qubit_operator = self.serialize_operator(*self.circuit.observables)
 
         # 4. Create the parallel workflow file
         workflow_file = create_parallel_workflow_file(backend_specs, qasm_circuits, qubit_operator, **run_kwargs)
@@ -105,38 +114,125 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         data = loop_until_finished(workflow_id)
         return data
 
+    @property
+    def needs_rotations(self):
+        """Determines whether the specified backend is a remote hardware device.
+
+        When using a remote hardware backend the following are applicable:
+        1. circuits need to include rotations (for observables other than PauliZ)
+        2. the ``IsingOperator`` representation of OpenFermion needs to be used
+        to serialize an ``Observable``
+
+        Returns:
+            bool: whether or not the backend specified needs rotations
+        """
+        return "backend" in self.qe_module_name
+
     def serialize_circuit(self, circuit):
         """Serializes the circuit before submission according to the backend
         specified.
 
-        The circuit is represented as an OpenQASM 2.0 program.
-        Measurement instructions are removed from the program as the backend is
-        instructed to measure all qubits by default by Orquestra.
+        The circuit is represented as an OpenQASM 2.0 program. Measurement
+        instructions are removed from the program as the operator is passed
+        separately.
 
         Args:
             circuit (~.CircuitGraph): circuit to serialize
+
+        Returns:
+            str: OpenQASM 2.0 representation of the circuit without any
+            measurement instructions
         """
-        # Remote hardware backends need rotations to be applied
-        needs_rotation = "backend" in self.qe_module_name
-        qasm_str = circuit.to_openqasm(rotations=needs_rotation)
+        qasm_str = circuit.to_openqasm(rotations=self.needs_rotations)
 
         qasm_without_measurements = re.sub('measure.*?;\n', '', qasm_str)
-
         return qasm_without_measurements
 
-    # TODO: finalize
-    def get_qubit_operator_repr(self):
-        from pennylane.utils import decompose_hamiltonian
-        # 1. decompose
-        decomp = decompose_hamiltonian(qml.Hadamard(wires=[0]).matrix)
+    # TODO: finalize, finalize docstring
+    def serialize_operator(self, observable):
+        """
+        Serialize the observable specified for the circuit as an OpenFermion
+        operator.
 
-        observables = decomp[1]
-        for idx in range(len(observables)):
-            obs = observables[idx]
-            if not isinstance(obs, qml.operation.Tensor):
-                decomp[1][idx] = qml.operation.Tensor(obs)
+        Args:
+            observable (~.Observable): the observable to get the operator
+                representation for
 
-        _terms_to_qubit_operator(decomp[0], decomp[1])
+        Returns:
+            str: string representation of terms making up the observable
+        """
+        if self.needs_rotations:
+            obs_wires = observable.wires
+            wires = self.wires.index(obs_wires)
+            op_str = pauliz_operator_string(wires)
+        else:
+            op_str = qubitoperator_string(observable)
+
+        return op_str
+
+    @staticmethod
+    def pauliz_operator_string(wires):
+        """Creates an OpenFermion operator string that can be passed when
+        creating an ``openfermion.IsingOperator``.
+
+        This method is used if rotations are needed for the backend specified.
+        In such a case a string that represents measuring PauliZ on each of the
+        affected wires is used.
+
+        **Example**
+
+        >>> dev = QeQiskitDevice(wires=2)
+        >>> wires = [0, 1, 2]
+        >>> op_str = dev.pauliz_operator_string(wires)
+        >>> print(op_str)
+        [Z0 Z1 Z2]
+        >>> print(openfermion.IsingOperator(op_str))
+        1.0 [Z0 Z1 Z2]
+
+        Args:
+            wires (Wires): the wires the observable of the quantum function
+                acts on
+
+        Returns:
+            str: the ``openfermion.IsingOperator`` string representation 
+        """
+        op_wires_but_last = [f'Z{w} ' for w in wires[:-1]]
+        op_last_wire = f'Z{wires[-1]}'
+        op_str = "".join(['[', *op_wires_but_last, op_last_wire,']'])
+        return op_str
+
+    def qubitoperator_string(self, observable):
+        #TODO: docstring, examples & tests
+        accepted_obs = {"PauliX", "PauliY", "PauliZ", "Identity"}
+
+        if isinstance(observable, Tensor):
+            need_decomposition = any(o.name not in accepted_obs for o in observable.obs)
+        else:
+            need_decomposition = observable.name not in accepted_obs
+
+        if need_decomposition:
+            # 1. decompose
+            coeffs, obs_list = decompose_hamiltonian(observable.matrix)
+
+            for idx in range(len(obs_list)):
+                obs = obs_list[idx]
+
+                if not isinstance(obs, Tensor):
+                    # Convert terms to Tensor such that _terms_to_qubit_operator
+                    # can be used
+                    obs_list[idx] = Tensor(obs)
+
+        else:
+            if not isinstance(observable, Tensor):
+                # If decomposition is not needed and is not a Tensor, we need
+                # to convert the single observable
+                observable = Tensor(observable)
+
+            coeffs = [1]
+            obs_list = [observable]
+
+        return _terms_to_qubit_operator(coeffs, obs_list)
+
     '''
     def apply_operations(self, operations):
         """Apply the circuit operations to the state.
