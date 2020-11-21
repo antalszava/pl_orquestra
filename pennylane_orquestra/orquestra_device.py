@@ -3,6 +3,7 @@ Base device class for PennyLane-Orquestra.
 """
 import abc
 import json
+import re
 
 import numpy as np
 
@@ -91,7 +92,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # TODO:
         # 2-3. Create qasm strings from the circuits & create the qubit operator
-        qasm_circuit, qubit_operator = process_circuits(circuit, **kwargs)
+        qasm_circuit = self.serialize_circuit(circuit)
+        qubit_operator = self.serialize_operator(circuit, **kwargs)
 
         # 4. Create the parallel workflow file
         workflow_file = create_parallel_workflow_file(backend_specs, qasm_circuits, qubit_operator, **run_kwargs)
@@ -103,6 +105,24 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         data = loop_until_finished(workflow_id)
         return data
 
+    def serialize_circuit(self, circuit):
+        """Serializes the circuit before submission according to the backend
+        specified.
+
+        The circuit is represented as an OpenQASM 2.0 program.
+        Measurement instructions are removed from the program as the backend is
+        instructed to measure all qubits by default by Orquestra.
+
+        Args:
+            circuit (~.CircuitGraph): circuit to serialize
+        """
+        # Remote hardware backends need rotations to be applied
+        needs_rotation = "backend" in self.qe_module_name
+        qasm_str = circuit.to_openqasm(rotations=needs_rotation)
+
+        qasm_without_measurements = re.sub('measure.*?;\n', '', qasm_str)
+
+        return qasm_without_measurements
 
     # TODO: finalize
     def get_qubit_operator_repr(self):
