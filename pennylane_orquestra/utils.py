@@ -115,7 +115,7 @@ def _process_wires(wires, n_wires=None):
     return wires
 
 
-def _terms_to_qubit_operator(coeffs, ops, wires=None):
+def _terms_to_qubit_operator_string(coeffs, ops, wires=None):
     r"""Converts a 2-tuple of complex coefficients and PennyLane operations to
     a string representation of OpenFermion ``QubitOperator``.
 
@@ -136,7 +136,7 @@ def _terms_to_qubit_operator(coeffs, ops, wires=None):
             accepted. If None, will map sorted wires from all `ops` to consecutive int.
 
     Returns:
-        str: the strin representation for an instance of ``openfermion.QubitOperator``.
+        str: the string representation for an instance of ``openfermion.QubitOperator``.
 
     **Example**
 

@@ -72,6 +72,10 @@ class TestSerializeCircuit:
         expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\n'
         assert qasm == expected
 
+obs_need_decompose = [
+    (qml.Hadamard(wires=[0], ),
+]
+
 class TestSerializeOperator:
     """Test the serialize_operator function"""
 
@@ -80,6 +84,17 @@ class TestSerializeOperator:
         dev = QeIBMQDevice(wires=1, shots=1000, analytic=False)
         op_str = dev.pauliz_operator_string(wires)
         assert op_str == expected
+
+
+    
+    @pytest.mark.parametrize("obs, expected", obs_need_decompose)
+    def test_qubitoperator_string_needs_decompose(self, obs):
+        dev = QeIBMQDevice(wires=1, shots=1000, analytic=False)
+        obs = qml.Hadamard(wires=[0])
+        op_str = dev.pauliz_operator_string(wires)
+        assert op_str == expected
+    
+        pass
 
     @pytest.mark.parametrize("wires", [[0], list(range(4)), ['a'], ['a','b']])
     def test_serialize_operator(self, wires):

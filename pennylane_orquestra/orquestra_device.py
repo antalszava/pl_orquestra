@@ -14,7 +14,7 @@ from pennylane.wires import Wires
 from pennylane.utils import decompose_hamiltonian
 
 from . import __version__
-from .utils import _terms_to_qubit_operator
+from .utils import _terms_to_qubit_operator_string
 
 
 class OrquestraDevice(QubitDevice, abc.ABC):
@@ -205,8 +205,16 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         op_str = "".join(["[", *op_wires_but_last, op_last_wire, "]"])
         return op_str
 
+    # TODO: docstring, examples & tests
     def qubitoperator_string(self, observable):
-        # TODO: docstring, examples & tests
+        """
+        Args:
+            wires (Wires): the wires the observable of the quantum function
+                acts on
+
+        Returns:
+            str: the ``openfermion.IsingOperator`` string representation
+        """
         accepted_obs = {"PauliX", "PauliY", "PauliZ", "Identity"}
 
         if isinstance(observable, Tensor):
@@ -235,7 +243,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             coeffs = [1]
             obs_list = [observable]
 
-        return _terms_to_qubit_operator(coeffs, obs_list)
+        return _terms_to_qubit_operator_string(coeffs, obs_list)
 
     '''
     def apply_operations(self, operations):

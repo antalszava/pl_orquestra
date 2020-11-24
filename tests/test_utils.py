@@ -28,19 +28,19 @@ class TestUtils:
             qml.operation.Tensor(qml.PauliX(wires=['w0'])),
             qml.operation.Tensor(qml.PauliY(wires=['w0']), qml.PauliZ(wires=['w2']))
         ]
-        op_str = utils._terms_to_qubit_operator(coeffs, ops, wires=qml.wires.Wires(['w0', 'w1', 'w2']))
+        op_str = utils._terms_to_qubit_operator_string(coeffs, ops, wires=qml.wires.Wires(['w0', 'w1', 'w2']))
         expected = '0.1 [X0] + 0.2 [Y0 Z2]'
         assert op_str == expected
 
     def test_error_terms_to_qubit_operator(self):
-        r"""Test if the conversion complains about non-Pauli matrix
-        observables"""
+        """Test if the conversion raises an error about non-Pauli matrix
+        observables."""
         with pytest.raises(
             ValueError,
             match="Expected only PennyLane observables PauliX/Y/Z or Identity, but also got {"
             "'QuadOperator'}.",
         ):
-            utils._terms_to_qubit_operator(
+            utils._terms_to_qubit_operator_string(
                 np.array([0.1 + 0.0j, 0.0]),
                 [
                     qml.operation.Tensor(qml.PauliX(0)),
