@@ -3,6 +3,7 @@ Base device class for PennyLane-Orquestra.
 """
 import abc
 import json
+import yaml
 import re
 
 import numpy as np
@@ -16,6 +17,7 @@ from pennylane.utils import decompose_hamiltonian
 from . import __version__
 from .utils import _terms_to_qubit_operator_string
 from .gen_workflow import expval_template
+from .cli_actions import qe_submit, loop_until_finished
 
 
 class OrquestraDevice(QubitDevice, abc.ABC):
@@ -65,6 +67,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # TODO: allow noise_model and device_connectivity options
         self.backend_device = backend_device
+        self._latest_id = None
         # self._pre_rotated_state = self._state
 
     def apply(self, operations, **kwargs):
@@ -113,15 +116,21 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         qubit_operator = self.serialize_operator(*circuit.observables)
 
-        # 4. Create the parallel workflow file
+        # 4. Create the workflow file
         workflow_file = expval_template(
             self.qe_component,
             backend_specs, qasm_circuit, qubit_operator, **kwargs
         )
-        print(workflow_file)
+
+        file_name = 'expval.yaml'
+        with open(file_name, 'w') as file:
+            d = yaml.dump(workflow_file, file)
 
         # 5. Submit the workflow
-        workflow_id = qe_submit(workflow_file)
+        workflow_id = qe_submit(file_name)
+
+        #TODO: explore why setting this attribute does not work
+        self._latest_id = workflow_id
 
         # 6. Loop until finished
         data = loop_until_finished(workflow_id)

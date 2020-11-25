@@ -19,6 +19,7 @@ info = {
     'entry_points': {
         'pennylane.plugins': ['orquestra.qiskit = pennylane_orquestra:QeQiskitDevice',
                               'orquestra.qiskit.ibmq = pennylane_orquestra:QeIBMQDevice',
+                              'orquestra.forest = pennylane_orquestra:QeForestDevice',
             ]
     },
     'description': 'PennyLane is a Python quantum machine learning library by Xanadu Inc.',
