@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 
 import pennylane as qml
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
@@ -72,8 +73,11 @@ class TestSerializeCircuit:
         expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\n'
         assert qasm == expected
 
+mx = np.diag(np.array([1,2,3,4]))
+
 obs_need_decompose = [
-    (qml.Hadamard(wires=[0], ),
+    (qml.Hadamard(wires=[0]), '0.7071067811865475 [X0] + 0.7071067811865475 [Z0]'),
+    (qml.Hermitian(mx, wires=[0, 1]), )
 ]
 
 class TestSerializeOperator:
@@ -85,16 +89,11 @@ class TestSerializeOperator:
         op_str = dev.pauliz_operator_string(wires)
         assert op_str == expected
 
-
-    
     @pytest.mark.parametrize("obs, expected", obs_need_decompose)
-    def test_qubitoperator_string_needs_decompose(self, obs):
+    def test_qubitoperator_string_needs_decompose(self, obs, expected):
         dev = QeIBMQDevice(wires=1, shots=1000, analytic=False)
-        obs = qml.Hadamard(wires=[0])
-        op_str = dev.pauliz_operator_string(wires)
+        op_str = dev.qubitoperator_string(obs)
         assert op_str == expected
-    
-        pass
 
     @pytest.mark.parametrize("wires", [[0], list(range(4)), ['a'], ['a','b']])
     def test_serialize_operator(self, wires):

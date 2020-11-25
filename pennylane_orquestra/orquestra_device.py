@@ -176,8 +176,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
     @staticmethod
     def pauliz_operator_string(wires):
-        """Creates an OpenFermion operator string that can be passed when
-        creating an ``openfermion.IsingOperator``.
+        """Creates an OpenFermion operator string based on the related wires
+        that can be passed when creating an ``openfermion.IsingOperator``.
 
         This method is used if rotations are needed for the backend specified.
         In such a case a string that represents measuring PauliZ on each of the
@@ -207,13 +207,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
     # TODO: docstring, examples & tests
     def qubitoperator_string(self, observable):
-        """
+        """Creates an OpenFermion operator string from an observable that can
+        be passed when creating an ``openfermion.QubitOperator``.
+
         Args:
-            wires (Wires): the wires the observable of the quantum function
-                acts on
+            observable (pennylane.operation.Observable): the observable to serialize
 
         Returns:
-            str: the ``openfermion.IsingOperator`` string representation
+            str: the ``openfermion.QubitOperator`` string representation
         """
         accepted_obs = {"PauliX", "PauliY", "PauliZ", "Identity"}
 

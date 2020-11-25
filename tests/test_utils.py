@@ -47,3 +47,24 @@ class TestUtils:
                     qml.operation.Tensor(qml.PauliZ(0), qml.QuadOperator(0.1, wires=1)),
                 ],
             )
+
+    def test_identities_terms_to_qubit_operator(self):
+        """Test that tensor products that contain Identity instances are handled
+        correctly by the _terms_to_qubit_operator function.
+
+        A decomposition of the following observable was used:
+        [[1 0 0 0]
+         [0 2 0 0]
+         [0 0 3 0]
+         [0 0 0 4]]
+        """
+        coeffs = [2.5, -0.5, -1.0]
+        obs_list = [qml.Identity(wires=[0]) @ qml.Identity(wires=[1]),
+                qml.Identity(wires=[0]) @ qml.PauliZ(wires=[1]),
+                qml.PauliZ(wires=[0]) @ qml.Identity(wires=[1])]
+
+        op_str = utils._terms_to_qubit_operator_string(coeffs, obs_list)
+
+        # Remove new line characters
+        op_str = op_str.replace('\n','')
+        assert op_str == "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"
