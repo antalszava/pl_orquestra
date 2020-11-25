@@ -15,6 +15,7 @@ from pennylane.utils import decompose_hamiltonian
 
 from . import __version__
 from .utils import _terms_to_qubit_operator_string
+from .gen_workflow import expval_template
 
 
 class OrquestraDevice(QubitDevice, abc.ABC):
@@ -113,7 +114,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         qubit_operator = self.serialize_operator(*self.circuit.observables)
 
         # 4. Create the parallel workflow file
-        workflow_file = create_parallel_workflow_file(
+        workflow_file = expval_template(
+            self.qe_component,
             backend_specs, qasm_circuits, qubit_operator, **run_kwargs
         )
 

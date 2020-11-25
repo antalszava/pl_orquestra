@@ -30,12 +30,12 @@ backend_import_db = {
         'qe-qulacs': qulacs_import
         }
 
-def expval_template(backend, backend_specs, circuit, operator, **kwargs):
+def expval_template(component, backend_specs, circuit, operator, **kwargs):
     """Workflow template for computing the expectation value of an operator
     given a quantum circuit and a device backend.
 
     Args:
-        backend (str): the name of the backend to use
+        component (str): the name of the Orquestra component to use
         backend_specs (str): the Orquestra backend specifications as a json
             string
         circuit (str): the circuit is represented as an OpenQASM 2.0
@@ -57,7 +57,7 @@ def expval_template(backend, backend_specs, circuit, operator, **kwargs):
     noise_model = 'None' if 'noise_model' not in kwargs else kwargs['noise_model']
     device_connectivity = 'None' if 'device_connectivity' not in kwargs else kwargs['device_connectivity']
 
-    backend_import = backend_import_db[backend]
+    backend_import = backend_import_db[component]
     
     expval_template = {'apiVersion': 'io.orquestra.workflow/1.0.0',
      'name': 'expval',
@@ -102,7 +102,7 @@ def expval_template(backend, backend_specs, circuit, operator, **kwargs):
         expval_template['steps'][0]['config']['resources'] = resources
 
     # Insert the backend component to the import list of the step
-    expval_template['steps'][0]['config']['runtime']['imports'].append(backend)
+    expval_template['steps'][0]['config']['runtime']['imports'].append(component)
 
     # Insert step inputs
     expval_template['steps'][0]['inputs'] = []

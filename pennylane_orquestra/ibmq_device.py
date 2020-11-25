@@ -17,6 +17,7 @@ class QeIBMQDevice(OrquestraDevice):
     """Orquestra device"""
     short_name = "orquestra.qiskit.ibmq"
 
+    qe_backend = "qe-qiskit"
     qe_module_name = "qeqiskit.backend"
     qe_function_name = "QiskitBackend"
 

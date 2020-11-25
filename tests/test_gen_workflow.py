@@ -2,8 +2,9 @@ import pytest
 import subprocess
 
 import yaml
-import gen_workflow as gw
-from cli_actions import qe_submit
+import pennylane_orquestra.gen_workflow as gw
+#import gen_workflow as gw
+from pennylane_orquestra.cli_actions import qe_submit
 
 # Data that are inserted into a workflow template
 resources = {'cpu': '1000m', 'memory': '1Gi', 'disk': '10Gi'}
