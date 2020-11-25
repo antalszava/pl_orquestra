@@ -128,7 +128,7 @@ def loop_until_finished(workflow_id):
     try:
         location = results[1].split()[1]
     except IndexError:
-        print("".join(workflowresult_details(workflow_id)))
+        print("".join(get_workflow_results(workflow_id)))
 
     with urllib.request.urlopen(location) as url:
         data = json.loads(url.read().decode())
