@@ -62,6 +62,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     def __init__(self, wires, backend_device, shots=1000, analytic=True, **kwargs):
         super().__init__(wires=wires, shots=shots, analytic=analytic)
 
+        # TODO: allow noise_model and device_connectivity options
         self.backend_device = backend_device
         # self._pre_rotated_state = self._state
 
@@ -69,7 +70,12 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         pass
 
     def create_backend_specs(self, **run_kwargs):
+        """Create the backend specifications based on the device options.
 
+        Returns:
+            str: the backend specifications represented as a string
+        """
+        # TODO: what can be run_kwargs? (any?)
         # TODO: do we want to cache this?
         backend_specs = {}
         backend_specs["module_name"] = self.qe_module_name
@@ -152,7 +158,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         qasm_without_measurements = re.sub("measure.*?;\n", "", qasm_str)
         return qasm_without_measurements
 
-    # TODO: finalize, finalize docstring
     def serialize_operator(self, observable):
         """
         Serialize the observable specified for the circuit as an OpenFermion

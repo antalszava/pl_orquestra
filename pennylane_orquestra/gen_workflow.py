@@ -30,17 +30,34 @@ backend_import_db = {
         'qe-qulacs': qulacs_import
         }
 
-get_backend_import = lambda backend_component: backend_import_db[backend_component]
+def expval_template(backend, backend_specs, circuit, operator, **kwargs):
+    """Workflow template for computing the expectation value of an operator
+    given a quantum circuit and a device backend.
 
-def expval_template(backend_component, backend_specs, qasm_circuit, operator_string, noise_model=None, device_connectivity=None, resources=None):
+    Args:
+        backend (str): the name of the backend to use
+        backend_specs (str): the Orquestra backend specifications as a json
+            string
+        circuit (str): the circuit is represented as an OpenQASM 2.0
+            program
+        operator (str):
     
-    if noise_model is None:
-        noise_model = 'None'
+    Keyword arguments:
+        noise_model='None' (str): the noise model to use
+        device_connectivity='None' (str): the device connectivity of the remote
+            device
+        resources='None' (str): the machine resources to use for executing the
+            workflow
 
-    if device_connectivity is None:
-        device_connectivity = 'None'
+    Returns:
+        dict: the dictionary that contains the workflow template to be
+        submitted to Orquestra
+    """
+    # By default Orquestra takes 'None' (needs to be a string)
+    noise_model = 'None' if 'noise_model' not in kwargs else kwargs['noise_model']
+    device_connectivity = 'None' if 'device_connectivity' not in kwargs else kwargs['device_connectivity']
 
-    backend_import = backend_import_db[backend_component]
+    backend_import = backend_import_db[backend]
     
     expval_template = {'apiVersion': 'io.orquestra.workflow/1.0.0',
      'name': 'expval',
@@ -79,19 +96,20 @@ def expval_template(backend_component, backend_specs, qasm_circuit, operator_str
     # Insert the backend component to the main imports
     expval_template['imports'].append(backend_import)
 
+    resources = kwargs.get('resources', None)
     if resources is not None:
         # Insert the backend component to the import list of the step
         expval_template['steps'][0]['config']['resources'] = resources
 
     # Insert the backend component to the import list of the step
-    expval_template['steps'][0]['config']['runtime']['imports'].append(backend_component)
+    expval_template['steps'][0]['config']['runtime']['imports'].append(backend)
 
     # Insert step inputs
     expval_template['steps'][0]['inputs'] = []
     expval_template['steps'][0]['inputs'].append({'backend_specs': backend_specs, 'type': 'string'})
     expval_template['steps'][0]['inputs'].append({'noise_model': noise_model, 'type': 'noise-model'})
     expval_template['steps'][0]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device-connectivity'})
-    expval_template['steps'][0]['inputs'].append({'target_operator': operator_string, 'type': 'string'})
-    expval_template['steps'][0]['inputs'].append({'circuit': qasm_circuit, 'type': 'string'})
+    expval_template['steps'][0]['inputs'].append({'target_operator': operator, 'type': 'string'})
+    expval_template['steps'][0]['inputs'].append({'circuit': circuit, 'type': 'string'})
     
     return expval_template
