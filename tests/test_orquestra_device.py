@@ -21,6 +21,17 @@ class TestBaseDevice:
         with pytest.raises(NotImplementedError):
             circuit()
 
+    def test_qasm_simulator_analytic_warning(self):
+        """Test that a warning is raised when using the QeQiskitDevice with the
+        qasm_simulator backend in analytic mode and that we'll switch to
+        sampling mode."""
+
+        with pytest.warns(Warning, match="The qasm_simulator backend device cannot be used in "
+                    "analytic mode. Results are based on sampling."):
+            dev = qml.device('orquestra.qiskit', backend_device='qasm_simulator', wires=2, analytic=True)
+
+        assert not dev.analytic
+
 class TestCreateBackendSpecs:
     """Test the create_backend_specs function"""
 
