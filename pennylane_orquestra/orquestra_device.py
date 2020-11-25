@@ -92,7 +92,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self._circuit_hash = circuit.hash
 
         # 1. Create the backend specs based on Device options and run_kwargs
-        backend_specs = self.create_backend_specs(**run_kwargs)
+        backend_specs = self.create_backend_specs(**kwargs)
 
         # 2. Create qasm strings from the circuits
         qasm_circuit = self.serialize_circuit(circuit)
@@ -205,10 +205,24 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         op_str = "".join(["[", *op_wires_but_last, op_last_wire, "]"])
         return op_str
 
-    # TODO: docstring, examples & tests
     def qubitoperator_string(self, observable):
         """Creates an OpenFermion operator string from an observable that can
         be passed when creating an ``openfermion.QubitOperator``.
+
+        This method decomposes an observable into a sum of Pauli terms and
+        identities, if needed.
+
+        **Example**
+
+        >>> dev = QeQiskitDevice(wires=2)
+        >>> obs = qml.PauliZ(0)
+        >>> op_str = dev.qubitoperator_string(obs)
+        >>> print(op_str)
+        1 [Z0]
+        >>> obs = qml.Hadamard(0)
+        >>> op_str = dev.qubitoperator_string(obs)
+        >>> print(op_str)
+        0.7071067811865475 [X0] + 0.7071067811865475 [Z0]
 
         Args:
             observable (pennylane.operation.Observable): the observable to serialize
@@ -224,7 +238,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             need_decomposition = observable.name not in accepted_obs
 
         if need_decomposition:
-            # 1. decompose
             coeffs, obs_list = decompose_hamiltonian(observable.matrix)
 
             for idx in range(len(obs_list)):

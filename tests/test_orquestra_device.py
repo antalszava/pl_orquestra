@@ -75,11 +75,14 @@ class TestSerializeCircuit:
 
 mx = np.diag(np.array([1,2,3,4]))
 
-obs_need_decompose = [
+obs_serialize= [
+    # Don't decomposition
     (qml.Identity(wires=[0]), '1 []'),
     (qml.PauliX(wires=[0]), '1 [X0]'),
     (qml.PauliY(wires=[0]), '1 [Y0]'),
     (qml.PauliZ(wires=[0]), '1 [Z0]'),
+
+    # Need decomposition
     (qml.Hadamard(wires=[0]), '0.7071067811865475 [X0] + 0.7071067811865475 [Z0]'),
     (qml.Hermitian(mx, wires=[0, 1]), "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"),
     (qml.Identity(wires=[0]) @ qml.Identity(wires=[1]), '1 []'),
@@ -88,6 +91,7 @@ obs_need_decompose = [
     (qml.PauliZ(wires=[0]) @ qml.Identity(wires=[1]), '1 [Z0]'),
     (qml.Hermitian(mx, wires=[0, 1]) @ qml.Identity(wires=[2]), "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"),
 ]
+
 
 class TestSerializeOperator:
     """Test the serialize_operator function"""
@@ -98,7 +102,7 @@ class TestSerializeOperator:
         op_str = dev.pauliz_operator_string(wires)
         assert op_str == expected
 
-    @pytest.mark.parametrize("obs, expected", obs_need_decompose)
+    @pytest.mark.parametrize("obs, expected", obs_serialize)
     def test_qubitoperator_string_needs_decompose(self, obs, expected):
         dev = QeIBMQDevice(wires=1, shots=1000, analytic=False)
         op_str = dev.qubitoperator_string(obs)
@@ -109,4 +113,3 @@ class TestSerializeOperator:
         """Test that a circuit that is serialized correctly without rotations for
         a simulator backend"""
         pass
-
