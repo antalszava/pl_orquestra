@@ -57,7 +57,9 @@ def expval_template(component, backend_specs, circuit, operator, **kwargs):
     noise_model = 'None' if 'noise_model' not in kwargs else kwargs['noise_model']
     device_connectivity = 'None' if 'device_connectivity' not in kwargs else kwargs['device_connectivity']
 
-    backend_import = backend_import_db[component]
+    backend_import = backend_import_db.get(component, None)
+    if backend_import is None:
+        raise ValueError("The specified backend component is not supported.")
     
     expval_template = {'apiVersion': 'io.orquestra.workflow/1.0.0',
      'name': 'expval',

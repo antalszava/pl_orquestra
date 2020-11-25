@@ -23,10 +23,10 @@ def qe_list_workflow():
                                universal_newlines=True)
     return process.stdout.readlines()
 
-class TestWorkflowGeneration:
+class TestExpvalTemplate:
     """Test that workflow generation works as expected."""
 
-    def test_expval_template_can_yaml(self, tmpdir):
+    def test_can_yaml(self, tmpdir):
         """Test that filling in the workflow template for getting expectation
         values produces a valid yaml."""
         backend_component = 'qe-forest'
@@ -39,3 +39,11 @@ class TestWorkflowGeneration:
         with open(file_name, 'w') as file:
             # Testing that no errors arise here
             d = yaml.dump(workflow, file)
+
+    def test_unsupported_backend_component(self):
+        """Test that if an unsupported backend component is input then an error is raised."""
+        backend_component = 'SomeNonExistentBackend'
+
+        # Fill in workflow template
+        with pytest.raises(ValueError, match="The specified backend component is not supported."):
+            workflow = gw.expval_template(backend_component, backend_specs, qasm_circuit, operator_string)
