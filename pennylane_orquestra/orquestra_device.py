@@ -134,7 +134,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # 6. Loop until finished
         data = loop_until_finished(workflow_id)
-        return data
+
+        # Assume that there's only one step
+        val = [v for k,v in data.items()][0]['expval']['value']
+        return val
 
     @property
     def needs_rotations(self):
