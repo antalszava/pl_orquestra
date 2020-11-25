@@ -76,8 +76,17 @@ class TestSerializeCircuit:
 mx = np.diag(np.array([1,2,3,4]))
 
 obs_need_decompose = [
+    (qml.Identity(wires=[0]), '1 []'),
+    (qml.PauliX(wires=[0]), '1 [X0]'),
+    (qml.PauliY(wires=[0]), '1 [Y0]'),
+    (qml.PauliZ(wires=[0]), '1 [Z0]'),
     (qml.Hadamard(wires=[0]), '0.7071067811865475 [X0] + 0.7071067811865475 [Z0]'),
-    (qml.Hermitian(mx, wires=[0, 1]), )
+    (qml.Hermitian(mx, wires=[0, 1]), "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"),
+    (qml.Identity(wires=[0]) @ qml.Identity(wires=[1]), '1 []'),
+    (qml.PauliX(wires=[0]) @ qml.Identity(wires=[1]), '1 [X0]'),
+    (qml.PauliY(wires=[0]) @ qml.Identity(wires=[1]), '1 [Y0]'),
+    (qml.PauliZ(wires=[0]) @ qml.Identity(wires=[1]), '1 [Z0]'),
+    (qml.Hermitian(mx, wires=[0, 1]) @ qml.Identity(wires=[2]), "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"),
 ]
 
 class TestSerializeOperator:
