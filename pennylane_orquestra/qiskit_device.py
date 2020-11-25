@@ -17,6 +17,7 @@ class QeQiskitDevice(OrquestraDevice):
     """Orquestra device"""
     short_name = "orquestra.qiskit"
 
+    qe_component = "qe-qiskit"
     qe_module_name = "qeqiskit.simulator"
     qe_function_name = "QiskitSimulator"
 

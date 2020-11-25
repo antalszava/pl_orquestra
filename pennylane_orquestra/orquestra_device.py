@@ -108,16 +108,17 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # here for each operator specified?
         # 3. Create the qubit operator
 
-        if len(self.circuit.observables) != 1:
+        if len(circuit.observables) != 1:
             raise NotImplementedError
 
-        qubit_operator = self.serialize_operator(*self.circuit.observables)
+        qubit_operator = self.serialize_operator(*circuit.observables)
 
         # 4. Create the parallel workflow file
         workflow_file = expval_template(
             self.qe_component,
-            backend_specs, qasm_circuits, qubit_operator, **run_kwargs
+            backend_specs, qasm_circuit, qubit_operator, **kwargs
         )
+        print(workflow_file)
 
         # 5. Submit the workflow
         workflow_id = qe_submit(workflow_file)
@@ -175,9 +176,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         if self.needs_rotations:
             obs_wires = observable.wires
             wires = self.wires.index(obs_wires)
-            op_str = pauliz_operator_string(wires)
+            op_str = self.pauliz_operator_string(wires)
         else:
-            op_str = qubitoperator_string(observable)
+            op_str = self.qubit_operator_string(observable)
 
         return op_str
 
@@ -212,7 +213,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         op_str = "".join(["[", *op_wires_but_last, op_last_wire, "]"])
         return op_str
 
-    def qubitoperator_string(self, observable):
+    def qubit_operator_string(self, observable):
         """Creates an OpenFermion operator string from an observable that can
         be passed when creating an ``openfermion.QubitOperator``.
 
@@ -223,11 +224,11 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         >>> dev = QeQiskitDevice(wires=2)
         >>> obs = qml.PauliZ(0)
-        >>> op_str = dev.qubitoperator_string(obs)
+        >>> op_str = dev.qubit_operator_string(obs)
         >>> print(op_str)
         1 [Z0]
         >>> obs = qml.Hadamard(0)
-        >>> op_str = dev.qubitoperator_string(obs)
+        >>> op_str = dev.qubit_operator_string(obs)
         >>> print(op_str)
         0.7071067811865475 [X0] + 0.7071067811865475 [Z0]
 

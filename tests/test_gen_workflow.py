@@ -3,7 +3,6 @@ import subprocess
 
 import yaml
 import pennylane_orquestra.gen_workflow as gw
-#import gen_workflow as gw
 from pennylane_orquestra.cli_actions import qe_submit
 
 # Data that are inserted into a workflow template
