@@ -39,28 +39,3 @@ class TestWorkflowGeneration:
         with open(file_name, 'w') as file:
             # Testing that no errors arise here
             d = yaml.dump(workflow, file)
-
-    @pytest.mark.skip(reason="TODO: remove testing submission")
-    @pytest.mark.parametrize("backend_component", list(gw.backend_import_db.keys()))
-    def test_can_submit(self, backend_component, tmpdir):
-        """Test that filling in the workflow template for getting expectation
-        values can be submitted to Orquestra."""
-        # Skip if has not been authenticated with Orquestra
-        try_resp = qe_list_workflow()
-        need_login_msg = 'token has expired, please log in again\n'
-
-        if need_login_msg in try_resp:
-            pytest.skip("Has not logged in to the Orquestra platform.")
-
-        qasm_circuit = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[1]; creg c[1];'
-
-        # Fill in workflow template
-        workflow = gw.expval_template(backend_component, backend_specs, qasm_circuit, operator_string)
-        file_name = tmpdir.join('test_workflow.yaml')
-
-        with open(file_name, 'w') as file:
-            d = yaml.dump(workflow, file)
-
-        # Submit a workflow
-        response = qe_submit(file_name)
-        assert 'Successfully submitted workflow to quantum engine!\n' in response
