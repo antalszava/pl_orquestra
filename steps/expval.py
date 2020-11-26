@@ -1,5 +1,5 @@
 import json
-from zquantum.core.utils import create_object, save_value_estimate, ValueEstimate
+from zquantum.core.utils import create_object, save_value_estimate, save_list, ValueEstimate
 from openfermion import QubitOperator, SymbolicOperator, IsingOperator
 from zquantum.core.circuit import Circuit
 
@@ -10,7 +10,7 @@ import numpy as np
 def run_circuit_and_get_expval(
     backend_specs: dict,
     circuit: str,
-    target_operator,
+    operators,
     noise_model: str = "None",
     device_connectivity: str = "None",
 ):
@@ -20,7 +20,7 @@ def run_circuit_and_get_expval(
     Args:
         backend_specs (dict): the parsed Orquestra backend specifications
         circuit (str): the circuit represented as an OpenQASM 2.0 program
-        target_operator (str): the operator in an ``openfermion.QubitOperator``
+        operators (str): the operator in an ``openfermion.QubitOperator``
             or ``openfermion.IsingOperator`` representation
 
     Keyword arguments:
@@ -28,6 +28,7 @@ def run_circuit_and_get_expval(
         device_connectivity="None" (str): the device connectivity of the remote
             device
     """
+    sampling_mode = backend.n_samples is not None
     backend_specs = json.loads(backend_specs)
     if noise_model != "None":
         backend_specs["noise_model"] = load_noise_model(noise_model)
@@ -40,18 +41,42 @@ def run_circuit_and_get_expval(
     qc = QuantumCircuit.from_qasm_str(circuit)
     circuit = Circuit(qc)
 
-    if backend.n_samples is None:
-        # Need to create operator for Simulator
-        op = QubitOperator(target_operator)
-    else:
-        op = IsingOperator(target_operator)
+    if not isinstance(operators, Sequence):
+        operators = [target_operator]
+
+    ops = []
+    for op in operators:
+        if sampling_mode:
+            ops.append(IsingOperator(op))
+        else:
+            # Need to create operator for Simulator
+            ops.append(QubitOperator(op))
 
     # 2. Expval
-    expectation_values = backend.get_expectation_values(
-        circuit,
-        op
-        #     epsilon=epsilon,
-        #     delta=delta,
-    )
-    val = ValueEstimate(np.sum(expectation_values.values))
-    save_value_estimate(val, "expval.json")
+    results = []
+    if sampling_mode:
+        # TODO: how do we allow sampling?
+        measurements = backend.run_circuit_and_measure(circuit)
+        # TODO: define return_type
+        # if return_type is not Samples:
+        # Expval, need to post-process samples
+        for op in ops:
+
+            # Note: each expval runs the circuit every time
+            #    measurements = self.run_circuit_and_measure(circuit)
+            #    expectation_values = measurements.get_expectation_values(operator)
+            # TODO: could we use a joint interface that runs the circuit ones and can ko
+            # TODO: kwargs?:
+            #     epsilon=epsilon,
+            #     delta=delta,
+            expectation_values = measurements.get_expectation_values(op)
+            expectation_values = expectation_values_to_real(expectation_values)
+
+            # TODO: is this needed?:
+            val = ValueEstimate(np.sum(expectation_values.values))
+            results.append(val)
+    else:
+        # Exact version
+        # TODO
+    # save_value_estimate(results, "expval.json")
+    save_list(results, "expval.json")
