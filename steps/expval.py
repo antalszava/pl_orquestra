@@ -3,9 +3,16 @@ from zquantum.core.utils import create_object, save_value_estimate, save_list, V
 from openfermion import QubitOperator, SymbolicOperator, IsingOperator
 from zquantum.core.circuit import Circuit
 
+from zquantum.core.measurement import (
+    expectation_values_to_real,
+    ExpectationValues,
+    Measurements,
+)
+
 from qiskit import QuantumCircuit
 import numpy as np
 
+from collections import Sequence
 
 def run_circuit_and_get_expval(
     backend_specs: dict,
@@ -28,7 +35,6 @@ def run_circuit_and_get_expval(
         device_connectivity="None" (str): the device connectivity of the remote
             device
     """
-    sampling_mode = backend.n_samples is not None
     backend_specs = json.loads(backend_specs)
     if noise_model != "None":
         backend_specs["noise_model"] = load_noise_model(noise_model)
@@ -36,6 +42,8 @@ def run_circuit_and_get_expval(
         backend_specs["device_connectivity"] = load_circuit_connectivity(device_connectivity)
 
     backend = create_object(backend_specs)
+
+    sampling_mode = backend.n_samples is not None
 
     # 1. Parse circuit
     qc = QuantumCircuit.from_qasm_str(circuit)
@@ -78,5 +86,6 @@ def run_circuit_and_get_expval(
     else:
         # Exact version
         # TODO
+        pass
     # save_value_estimate(results, "expval.json")
     save_list(results, "expval.json")
