@@ -2,6 +2,8 @@ import sys
 import subprocess
 import time
 import os
+import yaml
+from appdirs import user_data_dir
 import urllib.request, json
 
 def qe_get(workflow_id, option='workflow'):
@@ -25,11 +27,15 @@ def qe_get(workflow_id, option='workflow'):
                                universal_newlines=True)
     return process.stdout.readlines()  
 
-def qe_submit(file_name):
+def qe_submit(filepath, keep_file=False):
     """Function for submitting a workflow via a CLI call.
     
     Args:
-        file_name (str): the name of the workflow file
+        filepath (str): the filepath for the workflow file
+
+    Keyword Args:
+        keep_file=False (bool): whether or not to keep or delete the workflow
+            file after submission
 
     Returns:
         str: the ID of the workflow submitted
@@ -37,7 +43,7 @@ def qe_submit(file_name):
     Raises:
         ValueError: if the submission was not successful
     """
-    process = subprocess.Popen(['qe', 'submit', 'workflow', str(file_name)], 
+    process = subprocess.Popen(['qe', 'submit', 'workflow', str(filepath)], 
                                stdout=subprocess.PIPE,
                                universal_newlines=True)
     res = process.stdout.readlines()
@@ -45,6 +51,10 @@ def qe_submit(file_name):
     success_msg = 'Successfully submitted workflow to quantum engine!\n'
     if success_msg not in res:
         raise ValueError(res)
+
+    if not keep_file:
+        # Delete file
+        os.remove(filepath)
 
     # Get the workflow ID after submitting a workflow
     workflow_id = res[1].split()[-1]
@@ -81,6 +91,30 @@ def get_workflow_results(workflow_id):
         str: response message of the CLI call
     """
     return qe_get(workflow_id, option='workflowresult')
+
+def write_workflow_file(filename, workflow):
+    """Write a workflow file given the name of the file.
+
+    This function will create a YAML file with the workflow content. The file
+    is placed into a user specific data folder specified by using
+    ``appdirs.user_data_dir``.
+
+    Args:
+        filename (str): the name of the file to write
+        workflow (dict): the workflow generated as a dictionary
+    """
+    # Get the directory to write the file to
+    directory = user_data_dir("pennylane-orquestra", "Xanadu")
+
+    # Create target Directory if it doesn't exist
+    os.makedirs(directory, exist_ok=True)
+
+    filepath = os.path.join(directory, filename)
+
+    with open(filepath, 'w') as file:
+        d = yaml.dump(workflow, file)
+
+    return filepath
 
 def get_step_ids(res, workflow_id):
     step_ids = []

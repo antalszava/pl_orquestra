@@ -3,8 +3,8 @@ Base device class for PennyLane-Orquestra.
 """
 import abc
 import json
-import yaml
 import re
+import appdirs
 
 import numpy as np
 
@@ -17,11 +17,20 @@ from pennylane.utils import decompose_hamiltonian
 from . import __version__
 from .utils import _terms_to_qubit_operator_string
 from .gen_workflow import expval_template
-from .cli_actions import qe_submit, loop_until_finished
+from .cli_actions import qe_submit, loop_until_finished, write_workflow_file
 
 
 class OrquestraDevice(QubitDevice, abc.ABC):
-    """Orquestra device"""
+    """Orquestra device
+    
+    Keyword Args:
+        keep_workflow_files=False (bool): Whether or not the workflow files
+            generated during the circuit execution should be kept or deleted.
+            These files are placed into a user specific data folder specified
+            by the output of ``appdirs.user_data_dir("pennylane-orquestra",
+            "Xanadu")``.
+    
+    """
 
     name = "Orquestra device"
     short_name = "orquestra.base"
@@ -68,6 +77,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # TODO: allow noise_model and device_connectivity options
         self.backend_device = backend_device
         self._latest_id = None
+        self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
         # self._pre_rotated_state = self._state
 
     def apply(self, operations, **kwargs):
@@ -117,17 +127,15 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         qubit_operator = self.serialize_operator(*circuit.observables)
 
         # 4. Create the workflow file
-        workflow_file = expval_template(
+        workflow = expval_template(
             self.qe_component,
             backend_specs, qasm_circuit, qubit_operator, **kwargs
         )
-
-        file_name = 'expval.yaml'
-        with open(file_name, 'w') as file:
-            d = yaml.dump(workflow_file, file)
+        filename = 'expval.yaml'
+        filepath = write_workflow_file(filename, workflow)
 
         # 5. Submit the workflow
-        workflow_id = qe_submit(file_name)
+        workflow_id = qe_submit(filepath)
 
         #TODO: explore why setting this attribute does not work
         self._latest_id = workflow_id

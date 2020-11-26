@@ -5,12 +5,9 @@ import yaml
 import pennylane_orquestra.gen_workflow as gw
 from pennylane_orquestra.cli_actions import qe_submit
 
-# Data that are inserted into a workflow template
-resources = {'cpu': '1000m', 'memory': '1Gi', 'disk': '10Gi'}
-backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 100}'
-qasm_circuit = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[2]; creg c[2]; h q[0];'
-operator_string = '[Z0]'
+from conftest import resources_default, backend_specs_default, qasm_circuit_default, operator_string_default
 
+# Auxiliary functions
 def qe_list_workflow():
     """Function for a CLI call to list workflows.
 
@@ -32,7 +29,8 @@ class TestExpvalTemplate:
         backend_component = 'qe-forest'
 
         # Fill in workflow template
-        workflow = gw.expval_template(backend_component, backend_specs, qasm_circuit, operator_string)
+        workflow = gw.expval_template(backend_component, backend_specs_default,
+                qasm_circuit_default, operator_string_default)
 
         file_name = tmpdir.join('test_workflow.yaml')
 
@@ -46,4 +44,6 @@ class TestExpvalTemplate:
 
         # Fill in workflow template
         with pytest.raises(ValueError, match="The specified backend component is not supported."):
-            workflow = gw.expval_template(backend_component, backend_specs, qasm_circuit, operator_string)
+            workflow = gw.expval_template(backend_component,
+                    backend_specs_default, qasm_circuit_default,
+                    operator_string_default)
