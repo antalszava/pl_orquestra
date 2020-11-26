@@ -24,6 +24,10 @@ def run_circuit_and_get_expval(
     """Takes a circuit to obtain the expectation value of an operator on a
     given backend.
 
+    All backend calls used in this function are defined as ``QuantumBackend``
+    and ``QuantumSimulator`` interface standard methods implemented are defined
+    in the ``z-quantum-core`` repository.
+
     Args:
         backend_specs (dict): the parsed Orquestra backend specifications
         circuit (str): the circuit represented as an OpenQASM 2.0 program
@@ -63,17 +67,15 @@ def run_circuit_and_get_expval(
     # 2. Expval
     results = []
     if sampling_mode:
-        # TODO: how do we allow sampling?
+        # Sampling mode --- Simulator sampling or Backend
         measurements = backend.run_circuit_and_measure(circuit)
         # TODO: define return_type
         # if return_type is not Samples:
         # Expval, need to post-process samples
+        # Probs: get_bitstring_distribution (doesn't take an op)
+        # State: get_wavefunction (doesn't take an op)
         for op in ops:
 
-            # Note: each expval runs the circuit every time
-            #    measurements = self.run_circuit_and_measure(circuit)
-            #    expectation_values = measurements.get_expectation_values(operator)
-            # TODO: could we use a joint interface that runs the circuit ones and can ko
             # TODO: kwargs?:
             #     epsilon=epsilon,
             #     delta=delta,
@@ -84,8 +86,16 @@ def run_circuit_and_get_expval(
             val = ValueEstimate(np.sum(expectation_values.values))
             results.append(val)
     else:
-        # Exact version
-        # TODO
-        pass
+        # Exact version --- Simulator exact
+        for op in ops:
+            # Note: each expval considers the circuit separately, however, the
+            # logic is backend specific, hence better to use the standard
+            # available method
+            expectation_values = backend.get_exact_expectation_values(circuit, op)
+
+            # TODO: is this needed?:
+            val = ValueEstimate(np.sum(expectation_values.values))
+            results.append(val)
+
     # save_value_estimate(results, "expval.json")
     save_list(results, "expval.json")
