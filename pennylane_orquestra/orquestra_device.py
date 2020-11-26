@@ -22,7 +22,7 @@ from .cli_actions import qe_submit, loop_until_finished, write_workflow_file
 
 class OrquestraDevice(QubitDevice, abc.ABC):
     """Orquestra device
-    
+
     Keyword Args:
         keep_workflow_files=False (bool): Whether or not the workflow files
             generated during the circuit execution should be kept or deleted.
@@ -136,8 +136,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # 5. Submit the workflow
         workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
-
-        #TODO: explore why setting this attribute does not work
         self._latest_id = workflow_id
 
         # 6. Loop until finished
@@ -146,6 +144,15 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Assume that there's only one step
         val = [v for k,v in data.items()][0]['expval']['value']
         return val
+
+    @property
+    def latest_id(self):
+        """Returns the latest workflow ID that has been executed.
+
+        Returns:
+            str: the ID of the latest workflow that has been submitted
+        """
+        return self._latest_id
 
     @property
     def needs_rotations(self):
