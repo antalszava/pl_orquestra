@@ -1,11 +1,25 @@
 import pytest
+import subprocess
+import os
 import numpy as np
 
 import pennylane as qml
+import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}'
+
+
+class MockPopen:
+    """A mock class that allows to mock the self.stdout.readlines() call."""
+    def __init__(self):
+        class MockStdOut: 
+            def readlines(*args):
+                return 'Successfully submitted workflow to quantum engine!\n'
+    
+        self.stdout = MockStdOut()
+
 
 class TestBaseDevice:
     """Test the Orquestra base device"""
@@ -31,6 +45,30 @@ class TestBaseDevice:
             dev = qml.device('orquestra.qiskit', backend_device='qasm_simulator', wires=2, analytic=True)
 
         assert not dev.analytic
+
+    @pytest.mark.parametrize("keep", [True, False])
+    def test_keep_workflow_file(self, keep, tmpdir, monkeypatch):
+
+        file_name = 'test_workflow.yaml'
+        dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
+        mock_res_dict = {'First': {'expval': {'value': 123456789}}}
+
+        assert not os.path.exists(tmpdir.join("expval.yaml"))
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(pennylane_orquestra.orquestra_device,
+                    "loop_until_finished", lambda *args, **kwargs:
+                    mock_res_dict)
+
+            @qml.qnode(dev)
+            def circuit():
+                qml.PauliX(0)
+                return qml.expval(qml.PauliZ(0))
+
+            assert circuit() == 123456789
+            file_kept = os.path.exists(tmpdir.join("expval.yaml"))
+            assert file_kept if keep else not file_kept
 
 class TestCreateBackendSpecs:
     """Test the create_backend_specs function"""

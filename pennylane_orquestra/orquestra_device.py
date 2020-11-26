@@ -135,7 +135,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         filepath = write_workflow_file(filename, workflow)
 
         # 5. Submit the workflow
-        workflow_id = qe_submit(filepath)
+        workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
 
         #TODO: explore why setting this attribute does not work
         self._latest_id = workflow_id
