@@ -71,11 +71,12 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
-    def __init__(self, wires, backend_device, shots=1000, analytic=True, **kwargs):
+    def __init__(self, wires, shots=1000, analytic=True, **kwargs):
         super().__init__(wires=wires, shots=shots, analytic=analytic)
 
         # TODO: allow noise_model and device_connectivity options
-        self.backend_device = backend_device
+
+        self.backend_device = kwargs.get('backend_device', None)
         self._latest_id = None
         self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
         # self._pre_rotated_state = self._state
