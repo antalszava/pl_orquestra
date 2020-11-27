@@ -117,13 +117,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # 2. Create qasm strings from the circuits
         qasm_circuit = self.serialize_circuit(circuit)
 
-        # TODO: assuming that there is a single operator: could we have a loop
-        # here for each operator specified?
-        # 3. Create the qubit operator
-
-        if len(circuit.observables) != 1:
-            raise NotImplementedError
-
+        # 3. Create the qubit operators
         ops = [self.serialize_operator(obs) for obs in circuit.observables]
         ops_json = json.dumps(ops)
 
