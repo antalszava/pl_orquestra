@@ -30,7 +30,26 @@ backend_import_db = {
         'qe-qulacs': qulacs_import
         }
 
-def expval_template(component, backend_specs, circuit, operators, **kwargs):
+def step_dictionary(name_suffix):
+    name = 'run-circuit-and-get-expval-' + name_suffix
+    step_dict = {'name': name,
+           'config': {'runtime': {'language': 'python3',
+             'imports': ['pl_orquestra',
+              'z-quantum-core',
+              'qe-openfermion',
+                # Place to insert: step backend component import
+                ],
+             'parameters': {'file': 'pl_orquestra/steps/expval.py',
+              'function': 'run_circuit_and_get_expval'}}
+            },
+            # Place to insert: inputs
+           'outputs': [{'name': 'expval',
+             'type': 'expval',
+             'path': '/app/expval.json'}]}
+
+    return step_dict
+
+def expval_template(component, backend_specs, circuits, operators, **kwargs):
     """Workflow template for computing the expectation value of operators
     given a quantum circuit and a device backend.
 
@@ -38,10 +57,10 @@ def expval_template(component, backend_specs, circuit, operators, **kwargs):
         component (str): the name of the Orquestra component to use
         backend_specs (str): the Orquestra backend specifications as a json
             string
-        circuit (str): the circuit is represented as an OpenQASM 2.0
-            program
-        operators (list): the list of string for operators in an
-            ``openfermion.QubitOperator`` or ``openfermion.IsingOperator``
+        circuits (list): list of circuits where each circuit is represented as
+            an OpenQASM 2.0 program
+        operators (list): a nested list of operators, each operator is a string
+            in an ``openfermion.QubitOperator`` or ``openfermion.IsingOperator``
             representation
     
     Keyword arguments:
@@ -77,44 +96,34 @@ def expval_template(component, backend_specs, circuit, operators, **kwargs):
        'type': 'git',
        'parameters': {'repository': 'git@github.com:zapatacomputing/qe-openfermion.git',
         'branch': 'dev'}},
-        # Will insert: main backend import
+        # Place to insert: main backend import
             ],
-     'steps': [{'name': 'run-circuit-and-get-expval',
-       'config': {'runtime': {'language': 'python3',
-         'imports': ['pl_orquestra',
-          'z-quantum-core',
-          'qe-openfermion',
-            # Will insert: step backend component import
-            ],
-         'parameters': {'file': 'pl_orquestra/steps/expval.py',
-          'function': 'run_circuit_and_get_expval'}}
-        },
-        # Will insert: inputs
-       'outputs': [{'name': 'expval',
-         'type': 'expval',
-         'path': '/app/expval.json'}]}],
+     'steps': [],
      'types': ['circuit', 'expval', 'noise-model', 'device-connectivity']}
-    
-    # TODO: update indexing when having multiple steps
     
     # Insert the backend component to the main imports
     expval_template['imports'].append(backend_import)
 
     resources = kwargs.get('resources', None)
-    if resources is not None:
+
+    for idx, (circ, ops) in enumerate(zip(circuits, operators)):
+        new_step = step_dictionary(str(idx))
+        expval_template['steps'].append(new_step)
+
+        if resources is not None:
+            # Insert the backend component to the import list of the step
+            expval_template['steps'][idx]['config']['resources'] = resources
+
         # Insert the backend component to the import list of the step
-        expval_template['steps'][0]['config']['resources'] = resources
+        expval_template['steps'][idx]['config']['runtime']['imports'].append(component)
 
-    # Insert the backend component to the import list of the step
-    expval_template['steps'][0]['config']['runtime']['imports'].append(component)
+        # Insert step inputs
+        expval_template['steps'][idx]['inputs'] = []
+        expval_template['steps'][idx]['inputs'].append({'backend_specs': backend_specs, 'type': 'string'})
 
-    # Insert step inputs
-    expval_template['steps'][0]['inputs'] = []
-    expval_template['steps'][0]['inputs'].append({'backend_specs': backend_specs, 'type': 'string'})
+        expval_template['steps'][idx]['inputs'].append({'noise_model': noise_model, 'type': 'noise-model'})
+        expval_template['steps'][idx]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device-connectivity'})
+        expval_template['steps'][idx]['inputs'].append({'operators': ops, 'type': 'string'})
+        expval_template['steps'][idx]['inputs'].append({'circuit': circ, 'type': 'string'})
 
-    expval_template['steps'][0]['inputs'].append({'noise_model': noise_model, 'type': 'noise-model'})
-    expval_template['steps'][0]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device-connectivity'})
-    expval_template['steps'][0]['inputs'].append({'operators': operators, 'type': 'string'})
-    expval_template['steps'][0]['inputs'].append({'circuit': circuit, 'type': 'string'})
-    
     return expval_template

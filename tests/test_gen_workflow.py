@@ -70,4 +70,15 @@ class TestExpvalTemplate:
 
         file_name = "test_workflow.yaml"
 
+        assert workflow['apiVersion'] == test_workflow['apiVersion']
+        assert workflow['name'] == test_workflow['name']
+        assert workflow['imports'] == test_workflow['imports']
+        assert workflow['steps'][0]['name'] == test_workflow['steps'][0]['name']
+        assert workflow['steps'][0]['config'] == test_workflow['steps'][0]['config']
+        assert workflow['steps'][0]['inputs']['backend_specs'] == test_workflow['steps'][0]['inputs']['backend_specs']
+        assert workflow['steps'][0]['inputs']['circuit'] == test_workflow['steps'][0]['inputs']['circuit']
+        assert workflow['steps'][0]['inputs']['operators'] == test_workflow['steps'][0]['inputs']['operators']
+        assert workflow['steps'][0]['inputs'] == test_workflow['steps'][0]['inputs']
+        assert workflow['steps'][0]['outputs'] == test_workflow['steps'][0]['outputs']
+        assert workflow['types'] == test_workflow['types']
         assert workflow == test_workflow

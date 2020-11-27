@@ -108,9 +108,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
     def execute(self, circuit, **kwargs):
 
+        # Input checks
         not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
         if not_all_expval:
-            raise NotImplementedError("OrquestraDevice only supports returning expectation values.")
+            raise NotImplementedError(f"The {self.short_name} device only supports returning expectation values.")
 
         self.check_validity(circuit.operations, circuit.observables)
 
@@ -153,6 +154,33 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             res = results[0]
 
         return res
+
+    def batch_execute(self, circuits, **kwargs):
+        # TODO: do we pass the batch_size here or to the device?
+        batch_size = kwargs.get("batch_size", 10)
+
+        idx = 0
+
+        results = []
+
+        # Iterating through the circuits with batches
+        while idx < len(circuits): 
+            end_idx = idx + batch_size
+            batch = circuits[idx:end_idx]
+            res = self._batch_execute(batch, kwargs)
+            results.append(res)
+            idx += batch_size
+
+        return np.array(results)
+
+    def _batch_execute(self, circuits, **run_kwargs):
+        """
+
+        Args:
+            circuits (list): a list of ciruits represented as ``CircuitGraph``
+                objects
+
+        """
 
     @property
     def latest_id(self):
