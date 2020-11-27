@@ -47,7 +47,7 @@ def circuit():
 circuit()
 ```
 ```
-array([-1, -1])
+-1
 ```
 
 *Using `QiskitSimulator` with the `statevector_simulator`*
