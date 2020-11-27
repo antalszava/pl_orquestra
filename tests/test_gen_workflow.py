@@ -70,4 +70,5 @@ class TestExpvalTemplate:
 
         file_name = "test_workflow.yaml"
 
+        print(workflow)
         assert workflow == test_workflow

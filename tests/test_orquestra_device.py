@@ -7,7 +7,7 @@ import pennylane as qml
 import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
 
-qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator"}'
+qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}'
 
 
@@ -51,7 +51,7 @@ class TestBaseDevice:
 
         file_name = 'test_workflow.yaml'
         dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
-        mock_res_dict = {'First': {'expval': {'value': 123456789}}}
+        mock_res_dict = {'First': {'expval': {'list': [{'list': 123456789}]}}}
 
         assert not os.path.exists(tmpdir.join("expval.yaml"))
         with monkeypatch.context() as m:
@@ -76,7 +76,7 @@ class TestCreateBackendSpecs:
     @pytest.mark.parametrize("backend", [QeQiskitDevice])
     def test_create_backend_specs_analytic(self, backend):
         """Test that the backend specs are created well for an analytic device"""
-        dev = backend(wires=1, shots=1000, analytic=True)
+        dev = backend(wires=1, shots=1000, backend_device='statevector_simulator', analytic=True)
         assert dev.create_backend_specs() == qiskit_analytic_specs
 
     @pytest.mark.parametrize("backend", [QeQiskitDevice])
@@ -156,9 +156,9 @@ class TestSerializeOperator:
         assert op_str == expected
 
     @pytest.mark.parametrize("obs, expected", obs_serialize)
-    def test_qubitoperator_string_needs_decompose(self, obs, expected):
+    def test_qubit_operator_string_needs_decompose(self, obs, expected):
         dev = QeIBMQDevice(wires=1, shots=1000, analytic=False)
-        op_str = dev.qubitoperator_string(obs)
+        op_str = dev.qubit_operator_string(obs)
         assert op_str == expected
 
     @pytest.mark.parametrize("wires", [[0], list(range(4)), ['a'], ['a','b']])
