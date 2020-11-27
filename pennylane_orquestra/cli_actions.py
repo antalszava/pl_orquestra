@@ -112,7 +112,9 @@ def write_workflow_file(filename, workflow):
     filepath = os.path.join(directory, filename)
 
     with open(filepath, 'w') as file:
-        d = yaml.dump(workflow, file)
+        # Need to keep the order of the keys so that Orquestra accepts the YAML
+        # file
+        d = yaml.dump(workflow, file, sort_keys=False)
 
     return filepath
 
