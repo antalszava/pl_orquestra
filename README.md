@@ -1,4 +1,4 @@
-An approach for integration with Orquestra
+An approach for integrating with Orquestra.
 
 **Installation**
 
@@ -7,14 +7,25 @@ Installing [PennyLane](https://github.com/PennyLaneAI/pennylane) and the [qe-cli
 The package can be installed using `pip` and running `pip install -e .` from
 the `pl_orquestra` folder.
 
+**Folder structure**
+
+*Server-side*
+
+The `steps` folder contains the functions used in generated workflows as steps.
+
+*Client-side*
+
+The `pennylane_orquestra` folder contains client-side code created as a
+PennyLane plugin.
+
 **Supported Orquestra backends**
 
 The following Orquestra backends are supported at the moment:
 
-* `QiskitSimulator`
-* `ForestSimulator`
-* `QulacsSimulator`
-* `IBMQBackend` (still under development)
+* `QiskitSimulator`: `"orquestra.qiskit"`
+* `ForestSimulator`: `"orquestra.forest"`
+* `QulacsSimulator`: `"orquestra.qulacs"`
+* `IBMQBackend`: `"orquestra.ibmq"` (still under development)
 
 The `backend_device` option can be passed as a keyword argument to the
 `qml.device` PennyLane function (see example).
@@ -35,13 +46,16 @@ def circuit():
 
 circuit()
 ```
+```
+array([-1, -1])
+```
 
 *Using `QiskitSimulator` with the `statevector_simulator`*
 
 ```python
 import pennylane as qml
 
-dev = qml.device('orquestra.qulacs', wires=3, analytic=True, keep_workflow_files=True)
+dev = qml.device('orquestra.qiskit', wires=3, backend_device='statevector_simulator', analytic=True, keep_workflow_files=True)
 
 @qml.qnode(dev)
 def circuit():
@@ -49,4 +63,7 @@ def circuit():
     return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
 
 circuit()
+```
+```
+array([-1, -1])
 ```

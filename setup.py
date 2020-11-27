@@ -19,7 +19,7 @@ info = {
     'entry_points': {
         'pennylane.plugins': [
             'orquestra.qiskit = pennylane_orquestra:QeQiskitDevice',
-            'orquestra.qiskit.ibmq = pennylane_orquestra:QeIBMQDevice',
+            'orquestra.ibmq = pennylane_orquestra:QeIBMQDevice',
             'orquestra.qulacs = pennylane_orquestra:QeQulacsDevice',
             'orquestra.forest = pennylane_orquestra:QeForestDevice',
             ]

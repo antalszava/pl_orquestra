@@ -15,7 +15,7 @@ from . import __version__
 
 class QeIBMQDevice(OrquestraDevice):
     """Orquestra device"""
-    short_name = "orquestra.qiskit.ibmq"
+    short_name = "orquestra.ibmq"
 
     qe_backend = "qe-qiskit"
     qe_module_name = "qeqiskit.backend"
