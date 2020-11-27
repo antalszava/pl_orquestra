@@ -64,8 +64,9 @@ class TestExpvalTemplate:
         backend_component = "qe-forest"
 
         # Fill in workflow template
+        circuits = [qasm_circuit_default]
         workflow = gw.expval_template(
-            backend_component, backend_specs_default, qasm_circuit_default, operator_string_default
+            backend_component, backend_specs_default, circuits, operator_string_default
         )
 
         file_name = "test_workflow.yaml"
@@ -75,9 +76,9 @@ class TestExpvalTemplate:
         assert workflow['imports'] == test_workflow['imports']
         assert workflow['steps'][0]['name'] == test_workflow['steps'][0]['name']
         assert workflow['steps'][0]['config'] == test_workflow['steps'][0]['config']
-        assert workflow['steps'][0]['inputs']['backend_specs'] == test_workflow['steps'][0]['inputs']['backend_specs']
-        assert workflow['steps'][0]['inputs']['circuit'] == test_workflow['steps'][0]['inputs']['circuit']
-        assert workflow['steps'][0]['inputs']['operators'] == test_workflow['steps'][0]['inputs']['operators']
+        assert workflow['steps'][0]['inputs'][0]['backend_specs'] == test_workflow['steps'][0]['inputs'][0]['backend_specs']
+        assert workflow['steps'][0]['inputs'][3]['operators'] == test_workflow['steps'][0]['inputs'][3]['operators']
+        assert workflow['steps'][0]['inputs'][4]['circuit'] == test_workflow['steps'][0]['inputs'][4]['circuit']
         assert workflow['steps'][0]['inputs'] == test_workflow['steps'][0]['inputs']
         assert workflow['steps'][0]['outputs'] == test_workflow['steps'][0]['outputs']
         assert workflow['types'] == test_workflow['types']
