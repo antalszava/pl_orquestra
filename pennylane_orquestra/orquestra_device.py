@@ -79,6 +79,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self.backend_device = kwargs.get('backend_device', None)
         self._latest_id = None
         self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
+        self._backend_specs = None
         # self._pre_rotated_state = self._state
 
     def apply(self, operations, **kwargs):
@@ -159,6 +160,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # TODO: do we pass the batch_size here or to the device?
         batch_size = kwargs.get("batch_size", 10)
 
+
+        # 1. Create the backend specs based on Device options and run_kwargs
+        self._backend_specs = self.create_backend_specs(**kwargs)
+
         idx = 0
 
         results = []
@@ -167,20 +172,71 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         while idx < len(circuits): 
             end_idx = idx + batch_size
             batch = circuits[idx:end_idx]
-            res = self._batch_execute(batch, kwargs)
+            res = self._batch_execute(batch, idx, **kwargs)
             results.append(res)
             idx += batch_size
 
         return np.array(results)
 
-    def _batch_execute(self, circuits, **run_kwargs):
+    def _batch_execute(self, circuits, idx, **kwargs):
         """
 
         Args:
             circuits (list): a list of ciruits represented as ``CircuitGraph``
                 objects
+            idx (int): the index of the batch used to name the workflow
 
         """
+        for circuit in circuits:
+            obs = circuit.observables
+
+            # Input checks
+            not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
+            if not_all_expval:
+                raise NotImplementedError(f"The {self.short_name} device only supports returning expectation values.")
+
+            self.check_validity(circuit.operations, circuit.observables)
+
+            # TODO: process hashes
+            self._circuit_hash = circuit.hash
+
+        # 2. Create qasm strings from the circuits
+        qasm_circuits = [self.serialize_circuit(circuit) for circuit in circuits]
+
+        # 3. Create the qubit operators
+        ops = [[self.serialize_operator(obs) for obs in circuit.observables] for circuit in circuits]
+        ops_json = json.dumps(ops)
+
+        # 4. Create the workflow file
+        workflow = expval_template(
+            self.qe_component,
+            backend_specs, qasm_circuits, ops_json, **kwargs
+        )
+        filename = f'expval-{str(idx)}.yaml'
+        filepath = write_workflow_file(filename, workflow)
+
+        # 5. Submit the workflow
+        workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
+        self._latest_id = workflow_id
+
+        # 6. Loop until finished
+        data = loop_until_finished(workflow_id)
+
+        # There are multiple steps
+        for idx in len(data.items())
+        result_dicts = [v for k,v in data.items()]
+        list_of_result_dicts = [dct['expval']['list'] for dct in result_dicts]
+
+        # Obtain the value for each operator
+        results = [res_dict['list'] for res_dict in list_of_result_dicts]
+
+        if len(results) > 1:
+            res = np.array(results)
+        else:
+            res = results[0]
+
+        # TODO: How to return the batch results?
+        return res
 
     @property
     def latest_id(self):
@@ -330,178 +386,3 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             obs_list = [observable]
 
         return _terms_to_qubit_operator_string(coeffs, obs_list)
-
-    '''
-    def apply_operations(self, operations):
-        """Apply the circuit operations to the state.
-
-        This method serves as an auxiliary method to :meth:`~.OrquestraDevice.apply`.
-
-        Args:
-            operations (List[pennylane.Operation]): operations to be applied
-        """
-
-        for i, op in enumerate(operations):
-            if i > 0 and isinstance(op, (QubitStateVector, BasisState)):
-                raise DeviceError(
-                    "Operation {} cannot be used after other Operations have already been applied "
-                    "on a {} device.".format(op.name, self.short_name)
-                )
-
-            if isinstance(op, QubitStateVector):
-                self._apply_qubit_state_vector(op)
-            elif isinstance(op, BasisState):
-                self._apply_basis_state(op)
-            elif isinstance(op, QubitUnitary):
-                self._apply_qubit_unitary(op)
-            elif isinstance(op, (CRZ, PhaseShift)):
-                self._apply_matrix(op)
-            else:
-                self._apply_gate(op)
-
-    def _apply_qubit_state_vector(self, op):
-        """Initialize state with a state vector"""
-        wires = op.wires
-        input_state = op.parameters[0]
-
-        if len(input_state) != 2 ** len(wires):
-            raise ValueError("State vector must be of length 2**wires.")
-        if input_state.ndim != 1 or len(input_state) != 2 ** len(wires):
-            raise ValueError("State vector must be of length 2**wires.")
-        if not np.isclose(np.linalg.norm(input_state, 2), 1.0, atol=tolerance):
-            raise ValueError("Sum of amplitudes-squared does not equal one.")
-
-        input_state = _reverse_state(input_state)
-
-        # call orquestra' state initialization
-        self._state.load(input_state)
-
-    def _apply_basis_state(self, op):
-        """Initialize a basis state"""
-        wires = op.wires
-        par = op.parameters
-
-        # translate from PennyLane to Orquestra wire order
-        bits = par[0][::-1]
-        n_basis_state = len(bits)
-
-        if not set(bits).issubset({0, 1}):
-            raise ValueError("BasisState parameter must consist of 0 or 1 integers.")
-        if n_basis_state != len(wires):
-            raise ValueError("BasisState parameter and wires must be of equal length.")
-
-        basis_state = 0
-        for bit in bits:
-            basis_state = (basis_state << 1) | bit
-
-        # call orquestra' basis state initialization
-        self._state.set_computational_basis(basis_state)
-
-    def _apply_qubit_unitary(self, op):
-        """Apply unitary to state"""
-        # translate op wire labels to consecutive wire labels used by the device
-        device_wires = self.map_wires(op.wires)
-        par = op.parameters
-
-        if len(par[0]) != 2 ** len(device_wires):
-            raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
-
-        if op.inverse:
-            par[0] = par[0].conj().T
-
-        # reverse wires (could also change par[0])
-        reverse_wire_labels = device_wires.tolist()[::-1]
-        unitary_gate = gate.DenseMatrix(reverse_wire_labels, par[0])
-        self._circuit.add_gate(unitary_gate)
-        unitary_gate.update_quantum_state(self._state)
-
-    def _apply_matrix(self, op):
-        """Apply predefined gate-matrix to state (must follow orquestra convention)"""
-        # translate op wire labels to consecutive wire labels used by the device
-        device_wires = self.map_wires(op.wires)
-        par = op.parameters
-
-        mapped_operation = self._operation_map[op.name]
-        if op.inverse:
-            mapped_operation = self._get_inverse_operation(mapped_operation, device_wires, par)
-
-        if callable(mapped_operation):
-            gate_matrix = mapped_operation(*par)
-        else:
-            gate_matrix = mapped_operation
-
-        # gate_matrix is already in correct order => no wire-reversal needed
-        dense_gate = gate.DenseMatrix(device_wires.labels, gate_matrix)
-        self._circuit.add_gate(dense_gate)
-        gate.DenseMatrix(device_wires.labels, gate_matrix).update_quantum_state(self._state)
-
-    def _apply_gate(self, op):
-        """Apply native orquestra gate"""
-
-        # translate op wire labels to consecutive wire labels used by the device
-        device_wires = self.map_wires(op.wires)
-        par = op.parameters
-
-        mapped_operation = self._operation_map[op.name]
-        if op.inverse:
-            mapped_operation = self._get_inverse_operation(mapped_operation, device_wires, par)
-
-        # Negating the parameters such that it adheres to orquestra
-        par = np.negative(par)
-
-        # mapped_operation is already in correct order => no wire-reversal needed
-        self._circuit.add_gate(mapped_operation(*device_wires.labels, *par))
-        mapped_operation(*device_wires.labels, *par).update_quantum_state(self._state)
-
-    @staticmethod
-    def _get_inverse_operation(mapped_operation, device_wires, par):
-        """Return the inverse of an operation"""
-
-        if mapped_operation is None:
-            return mapped_operation
-
-        # if an inverse variant of the operation exists
-        try:
-            inverse_operation = getattr(gate, mapped_operation.get_name() + "dag")
-        except AttributeError:
-            # if the operation is hard-coded
-            try:
-                if callable(mapped_operation):
-                    inverse_operation = np.conj(mapped_operation(*par)).T
-                else:
-                    inverse_operation = np.conj(mapped_operation).T
-            # if mapped_operation is a orquestra.gate and np.conj is applied on it
-            except TypeError:
-                # else, redefine the operation as the inverse matrix
-                def inverse_operation(*p):
-                    # embed the gate in a unitary matrix with shape (2**wires, 2**wires)
-                    g = mapped_operation(*p).get_matrix()
-                    mat = reduce(np.kron, [np.eye(2)] * len(device_wires)).astype(complex)
-                    mat[-len(g) :, -len(g) :] = g
-
-                    # mat follows PL convention => reverse wire-order
-                    reverse_wire_labels = device_wires.tolist()[::-1]
-                    gate_mat = gate.DenseMatrix(reverse_wire_labels, np.conj(mat).T)
-                    return gate_mat
-
-        return inverse_operation
-
-    def analytic_probability(self, wires=None):
-        """Return the (marginal) analytic probability of each computational basis state."""
-        if self._state is None:
-            return None
-
-        all_probs = self._abs(self.state) ** 2
-        prob = self.marginal_prob(all_probs, wires)
-        return prob
-
-    @property
-    def state(self):
-        # returns the state after all operations are applied
-        return _reverse_state(self._pre_rotated_state.get_vector())
-
-    def reset(self):
-        self._state.set_zero_state()
-        self._pre_rotated_state = self._state
-        self._circuit = QuantumCircuit(self.num_wires)
-    '''
