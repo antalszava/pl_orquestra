@@ -95,7 +95,11 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         backend_specs = {}
         backend_specs["module_name"] = self.qe_module_name
         backend_specs["function_name"] = self.qe_function_name
-        backend_specs["device_name"] = self.backend_device
+
+        if self.backend_device is not None:
+            # Only backends that have multiple backend_device need to specify one
+            # E.g., qe-qiskit
+            backend_specs["device_name"] = self.backend_device
 
         if not self.analytic:
             backend_specs["n_samples"] = self.shots
