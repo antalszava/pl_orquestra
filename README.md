@@ -2,7 +2,7 @@ An approach for integration with Orquestra
 
 **Installation**
 
-Installing [PennyLane]() and the [qe-cli](https://github.com/zapatacomputing/qe-cli) are required.
+Installing [PennyLane](https://github.com/PennyLaneAI/pennylane) and the [qe-cli](https://github.com/zapatacomputing/qe-cli) are required.
 
 The package can be installed using `pip` and running `pip install -e .` from
 the `pl_orquestra` folder.
@@ -14,6 +14,7 @@ The following Orquestra backends are supported at the moment:
 * `QiskitSimulator`
 * `ForestSimulator`
 * `QulacsSimulator`
+* `IBMQBackend` (still under development)
 
 The `backend_device` option can be passed as a keyword argument to the
 `qml.device` PennyLane function (see example).
