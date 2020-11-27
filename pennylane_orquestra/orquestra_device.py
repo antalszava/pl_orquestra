@@ -129,14 +129,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # 3. Create the qubit operators
         ops = [self.serialize_operator(obs) for obs in circuit.observables]
-        ops = [ops]
         ops_json = json.dumps(ops)
+        ops = [ops_json]
         qasm_circuit = [qasm_circuit]
 
         # 4. Create the workflow file
         workflow = expval_template(
             self.qe_component,
-            backend_specs, qasm_circuit, ops_json, **kwargs
+            backend_specs, qasm_circuit, ops, **kwargs
         )
         filename = 'expval.yaml'
         filepath = write_workflow_file(filename, workflow)
@@ -394,4 +394,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             coeffs = [1]
             obs_list = [observable]
 
-        return _terms_to_qubit_operator_string(coeffs, obs_list)
+        # Use consecutive integers as default wire_map
+        wire_map = {v:idx for idx, v in enumerate(self.wires)}
+        return _terms_to_qubit_operator_string(coeffs, obs_list, wires=wire_map)

@@ -32,6 +32,27 @@ class TestUtils:
         expected = '0.1 [X0] + 0.2 [Y0 Z2]'
         assert op_str == expected
 
+    def test_terms_to_qubit_operator_no_decomp(self):
+        coeffs = np.array([0.1])
+        ops = [
+            qml.operation.Tensor(qml.PauliX(wires=[3])),
+        ]
+
+        wire_map = {3:3}
+        op_str = utils._terms_to_qubit_operator_string(coeffs, ops, wires=wire_map)
+        expected = '0.1 [X3]'
+        assert op_str == expected
+
+    def test_terms_to_qubit_operator_default(self):
+        coeffs = np.array([0.1])
+        ops = [
+            qml.operation.Tensor(qml.PauliX(wires=[3])),
+        ]
+
+        op_str = utils._terms_to_qubit_operator_string(coeffs, ops)
+        expected = '0.1 [X0]'
+        assert op_str == expected
+
     def test_error_terms_to_qubit_operator(self):
         """Test if the conversion raises an error about non-Pauli matrix
         observables."""

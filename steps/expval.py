@@ -73,10 +73,17 @@ def run_circuit_and_get_expval(
     if sampling_mode:
         # Sampling mode --- Simulator sampling or Backend
         measurements = backend.run_circuit_and_measure(circuit)
+
+        # Iterating through the operators specified e.g., [IsingOperator("[Z0]
+        # + [Z1]"), IsingOperator("[Z1]")] to post-process the measurements
+        # outcomes
         for op in ops:
             expectation_values = measurements.get_expectation_values(op)
             expectation_values = expectation_values_to_real(expectation_values)
 
+            # Summing the expectation values obtained for each term of the
+            # operator yields the expectation value for the operator
+            # E.g., <psi|Z0 + Z1|psi> = <psi|Z0|psi> + <psi|Z1|psi>
             val = np.sum(expectation_values.values)
             results.append(val)
     else:

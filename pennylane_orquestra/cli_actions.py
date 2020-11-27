@@ -149,7 +149,7 @@ def loop_until_finished(workflow_id):
         message = strips[0]
         if time.time()-start > 240:
             current_status = workflow_details(workflow_id)
-            raise TimeoutError(f'The workflow results for workflow {workflow_id} were not obtained after 5 minutes. {current_status}')
+            raise TimeoutError(f'The workflow results for workflow {workflow_id} were not obtained after 4 minutes. {current_status}')
 
     if "is being processed. Please check back later." not in message:
         current_status = workflow_details(workflow_id)
