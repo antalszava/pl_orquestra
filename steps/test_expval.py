@@ -16,7 +16,7 @@ class TestExpvalExact:
         backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator"}'
 
         only_measure_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -31,7 +31,7 @@ class TestExpvalExact:
         backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator"}'
 
         hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\nh q[0];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -46,7 +46,7 @@ class TestExpvalExact:
         backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator"}'
 
         hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3];\ncreg c[3];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -62,7 +62,7 @@ class TestExpvalExact:
         backend_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator"}'
 
         hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3];\ncreg c[3];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -79,7 +79,7 @@ class TestExpvalSampling:
         backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 1000}'
 
         hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\nh q[0];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -95,7 +95,7 @@ class TestExpvalSampling:
         backend_specs = '{"module_name": "qeqiskit.backend", "function_name": "QiskitBackend", "device_name": "ibmq_qasm_simulator", "n_samples": 8192}'
 
         hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\nid q[0];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -110,7 +110,7 @@ class TestExpvalSampling:
         backend_specs = '{"module_name": "qequlacs.simulator", "function_name": "QulacsSimulator", "n_samples": 100}'
 
         only_measure_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -126,7 +126,7 @@ class TestExpvalSampling:
         backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 100}'
 
         hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3];\ncreg c[3];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 
@@ -142,7 +142,7 @@ class TestExpvalSampling:
         backend_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 100}'
 
         hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3];\ncreg c[3];\n'
-        target_op = ["[Z0]"]
+        target_op = '["[Z0]"]'
 
         lst = []
 

@@ -17,7 +17,7 @@ from collections import Sequence
 def run_circuit_and_get_expval(
     backend_specs: dict,
     circuit: str,
-    operators,
+    operators: list,
     noise_model: str = "None",
     device_connectivity: str = "None",
 ):
@@ -40,6 +40,7 @@ def run_circuit_and_get_expval(
             device
     """
     backend_specs = json.loads(backend_specs)
+    operators = json.loads(operators)
     if noise_model != "None":
         backend_specs["noise_model"] = load_noise_model(noise_model)
     if device_connectivity != "None":

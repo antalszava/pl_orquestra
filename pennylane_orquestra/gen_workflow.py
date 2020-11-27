@@ -30,8 +30,8 @@ backend_import_db = {
         'qe-qulacs': qulacs_import
         }
 
-def expval_template(component, backend_specs, circuit, operator, **kwargs):
-    """Workflow template for computing the expectation value of an operator
+def expval_template(component, backend_specs, circuit, operators, **kwargs):
+    """Workflow template for computing the expectation value of operators
     given a quantum circuit and a device backend.
 
     Args:
@@ -40,8 +40,9 @@ def expval_template(component, backend_specs, circuit, operator, **kwargs):
             string
         circuit (str): the circuit is represented as an OpenQASM 2.0
             program
-        operator (str): the operator in an ``openfermion.QubitOperator`` or
-            ``openfermion.IsingOperator`` representation
+        operators (list): the list of string for operators in an
+            ``openfermion.QubitOperator`` or ``openfermion.IsingOperator``
+            representation
     
     Keyword arguments:
         noise_model=None (str): the noise model to use
@@ -116,7 +117,7 @@ def expval_template(component, backend_specs, circuit, operator, **kwargs):
     if device_connectivity is not None:
         expval_template['steps'][0]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device-connectivity'})
 
-    expval_template['steps'][0]['inputs'].append({'target_operator': operator, 'type': 'string'})
+    expval_template['steps'][0]['inputs'].append({'operators': operators, 'type': 'string'})
     expval_template['steps'][0]['inputs'].append({'circuit': circuit, 'type': 'string'})
     
     return expval_template

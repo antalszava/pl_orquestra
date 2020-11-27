@@ -124,12 +124,13 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         if len(circuit.observables) != 1:
             raise NotImplementedError
 
-        qubit_operator = self.serialize_operator(*circuit.observables)
+        ops = [self.serialize_operator(obs) for obs in circuit.observables]
+        ops_json = json.dumps(ops)
 
         # 4. Create the workflow file
         workflow = expval_template(
             self.qe_component,
-            backend_specs, qasm_circuit, qubit_operator, **kwargs
+            backend_specs, qasm_circuit, ops_json, **kwargs
         )
         filename = 'expval.yaml'
         filepath = write_workflow_file(filename, workflow)
@@ -142,8 +143,17 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         data = loop_until_finished(workflow_id)
 
         # Assume that there's only one step
-        val = [v for k,v in data.items()][0]['expval']['value']
-        return val
+        list_of_result_dicts = [v for k,v in data.items()][0]['expval']['list']
+
+        # Obtain the value for each operator
+        results = [res_dict['list'] for res_dict in list_of_result_dicts]
+
+        if len(results) > 1:
+            res = np.array(results)
+        else:
+            res = results[0]
+
+        return res
 
     @property
     def latest_id(self):
