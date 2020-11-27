@@ -37,7 +37,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     pennylane_requires = ">=0.11.0"
     version = __version__
     author = "Antal Szava"
-    # _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
+    _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
 
     operations = {
         "BasisState",
@@ -122,11 +122,16 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         backend_specs = self.create_backend_specs(**kwargs)
 
         # 2. Create qasm strings from the circuits
-        qasm_circuit = self.serialize_circuit(circuit)
+        try:
+            qasm_circuit = self.serialize_circuit(circuit)
+        except AttributeError:
+            qasm_circuit = self.serialize_circuit(circuit.graph)
 
         # 3. Create the qubit operators
         ops = [self.serialize_operator(obs) for obs in circuit.observables]
+        ops = [ops]
         ops_json = json.dumps(ops)
+        qasm_circuit = [qasm_circuit]
 
         # 4. Create the workflow file
         workflow = expval_template(
@@ -201,6 +206,11 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             self._circuit_hash = circuit.hash
 
         # 2. Create qasm strings from the circuits
+
+        try:
+            qasm_circuit = self.serialize_circuit(circuits[0])
+        except AttributeError:
+            circuit = [circ.graph for circ in circuits]
         qasm_circuits = [self.serialize_circuit(circuit) for circuit in circuits]
 
         # 3. Create the qubit operators
@@ -223,7 +233,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         data = loop_until_finished(workflow_id)
 
         # There are multiple steps
-        for idx in len(data.items())
         result_dicts = [v for k,v in data.items()]
         list_of_result_dicts = [dct['expval']['list'] for dct in result_dicts]
 
