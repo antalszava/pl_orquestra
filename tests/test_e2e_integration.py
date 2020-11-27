@@ -58,6 +58,13 @@ class TestOrquestraIntegration:
         """Test a simple circuit that applies PauliX on the first wire."""
         dev = qml.device(device_name, wires=3, backend_name=backend, analytic=analytic)
 
+        # Skip if has not been authenticated with Orquestra
+        try_resp = qe_list_workflow()
+        need_login_msg = 'token has expired, please log in again\n'
+
+        if need_login_msg in try_resp:
+            pytest.skip("Has not logged in to the Orquestra platform.")
+
         @qml.qnode(dev)
         def circuit():
             qml.PauliX(0)
