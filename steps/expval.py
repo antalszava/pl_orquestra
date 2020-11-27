@@ -41,6 +41,7 @@ def run_circuit_and_get_expval(
     """
     backend_specs = json.loads(backend_specs)
     operators = json.loads(operators)
+
     if noise_model != "None":
         backend_specs["noise_model"] = load_noise_model(noise_model)
     if device_connectivity != "None":
@@ -57,46 +58,37 @@ def run_circuit_and_get_expval(
     if not isinstance(operators, Sequence):
         operators = [target_operator]
 
+    # 2. Create operators
     ops = []
     for op in operators:
         if sampling_mode:
+            # Operator for Backend/Simulator in sampling mode
             ops.append(IsingOperator(op))
         else:
-            # Need to create operator for Simulator
+            # Operator for Simulator exact mode
             ops.append(QubitOperator(op))
 
-    # 2. Expval
+    # 3. Expval
     results = []
     if sampling_mode:
         # Sampling mode --- Simulator sampling or Backend
         measurements = backend.run_circuit_and_measure(circuit)
-        # TODO: define return_type
-        # if return_type is not Samples:
-        # Expval, need to post-process samples
-        # Probs: get_bitstring_distribution (doesn't take an op)
-        # State: get_wavefunction (doesn't take an op)
         for op in ops:
-
-            # TODO: kwargs?:
-            #     epsilon=epsilon,
-            #     delta=delta,
             expectation_values = measurements.get_expectation_values(op)
             expectation_values = expectation_values_to_real(expectation_values)
 
-            # TODO: is this needed?:
-            val = ValueEstimate(np.sum(expectation_values.values))
+            val = np.sum(expectation_values.values)
             results.append(val)
     else:
         # Exact version --- Simulator exact
         for op in ops:
-            # Note: each expval considers the circuit separately, however, the
-            # logic is backend specific, hence better to use the standard
-            # available method
+            # Note: each expval considers the circuit separately
+            # As the logic is backend specific, better to use the standard
+            # get_exact_expectation_values method (instead of caching the state
+            # in some way)
             expectation_values = backend.get_exact_expectation_values(circuit, op)
 
-            # TODO: is this needed?:
-            val = ValueEstimate(np.sum(expectation_values.values))
+            val = np.sum(expectation_values.values)
             results.append(val)
 
-    # save_value_estimate(results, "expval.json")
     save_list(results, "expval.json")
