@@ -2,7 +2,7 @@
 resources_default = {"cpu": "1000m", "memory": "1Gi", "disk": "10Gi"}
 backend_specs_default = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 100}'
 qasm_circuit_default = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[2]; creg c[2]; h q[0];'
-operator_string_default = [["[Z0]"]]
+operator_string_default = [["[Z0]"], ["[Z0 X1 Y2]"]]
 
 # Test workflow
 
@@ -33,7 +33,34 @@ first_in = [
 
 first_step = {"name": first_name, "config": first_config, "outputs": first_out, "inputs": first_in}
 
-steps = [first_step]
+# 2. step
+second_name = "run-circuit-and-get-expval-1"
+second_config = {
+    "runtime": {
+        "language": "python3",
+        "imports": ["pl_orquestra", "z-quantum-core", "qe-openfermion", "qe-forest"],
+        "parameters": {
+            "file": "pl_orquestra/steps/expval.py",
+            "function": "run_circuit_and_get_expval",
+        },
+    }
+}
+
+second_out = [{"name": "expval", "type": "expval", "path": "/app/expval.json"}]
+second_backend_specs = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 100}'
+second_circuit = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[2]; creg c[2]; h q[0];'
+second_ops = ["[Z0 X1 Y2]"]
+second_in = [
+    {"backend_specs": second_backend_specs, "type": "string"},
+    {"noise_model": "None", "type": "noise-model"},
+    {"device_connectivity": "None", "type": "device-connectivity"},
+    {"operators": second_ops, "type": "string"},
+    {"circuit": second_circuit, "type": "string"},
+]
+
+second_step = {"name": second_name, "config": second_config, "outputs": second_out, "inputs": second_in}
+
+steps = [first_step, second_step]
 
 types = ["circuit", "expval", "noise-model", "device-connectivity"]
 
