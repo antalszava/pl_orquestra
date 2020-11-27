@@ -45,8 +45,8 @@ def expval_template(component, backend_specs, circuit, operators, **kwargs):
             representation
     
     Keyword arguments:
-        noise_model=None (str): the noise model to use
-        device_connectivity=None (str): the device connectivity of the remote
+        noise_model='None' (str): the noise model to use
+        device_connectivity='None' (str): the device connectivity of the remote
             device
         resources=None (str): the machine resources to use for executing the
             workflow
@@ -55,8 +55,9 @@ def expval_template(component, backend_specs, circuit, operators, **kwargs):
         dict: the dictionary that contains the workflow template to be
         submitted to Orquestra
     """
-    noise_model = kwargs.get('noise_model', None)
-    device_connectivity = kwargs.get('device_connectivity', None)
+    # By default Orquestra takes 'None' (needs to be a string)
+    noise_model = 'None' if 'noise_model' not in kwargs else kwargs['noise_model']
+    device_connectivity = 'None' if 'device_connectivity' not in kwargs else kwargs['device_connectivity']
 
     backend_import = backend_import_db.get(component, None)
     if backend_import is None:
@@ -110,13 +111,8 @@ def expval_template(component, backend_specs, circuit, operators, **kwargs):
     # Insert step inputs
     expval_template['steps'][0]['inputs'] = []
     expval_template['steps'][0]['inputs'].append({'backend_specs': backend_specs, 'type': 'string'})
-
-    if noise_model is not None:
-        expval_template['steps'][0]['inputs'].append({'noise_model': noise_model, 'type': 'noise-model'})
-
-    if device_connectivity is not None:
-        expval_template['steps'][0]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device-connectivity'})
-
+    expval_template['steps'][0]['inputs'].append({'backend_specs': backend_specs, 'type': 'string'})
+    expval_template['steps'][0]['inputs'].append({'noise_model': noise_model, 'type': 'noise-model'})
     expval_template['steps'][0]['inputs'].append({'operators': operators, 'type': 'string'})
     expval_template['steps'][0]['inputs'].append({'circuit': circuit, 'type': 'string'})
     

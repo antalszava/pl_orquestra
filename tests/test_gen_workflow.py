@@ -5,7 +5,13 @@ import yaml
 import pennylane_orquestra.gen_workflow as gw
 from pennylane_orquestra.cli_actions import qe_submit
 
-from conftest import resources_default, backend_specs_default, qasm_circuit_default, operator_string_default
+from conftest import (
+    resources_default,
+    backend_specs_default,
+    qasm_circuit_default,
+    operator_string_default,
+    test_workflow,
+)
 
 # Auxiliary functions
 def qe_list_workflow():
@@ -15,10 +21,11 @@ def qe_list_workflow():
     inexpensive way of checking that the caller has been authenticated with the
     Orquestra platform.
     """
-    process = subprocess.Popen(['qe', 'list', 'workflow'],
-                               stdout=subprocess.PIPE,
-                               universal_newlines=True)
+    process = subprocess.Popen(
+        ["qe", "list", "workflow"], stdout=subprocess.PIPE, universal_newlines=True
+    )
     return process.stdout.readlines()
+
 
 class TestExpvalTemplate:
     """Test that workflow generation works as expected."""
@@ -26,24 +33,41 @@ class TestExpvalTemplate:
     def test_can_yaml(self, tmpdir):
         """Test that filling in the workflow template for getting expectation
         values produces a valid yaml."""
-        backend_component = 'qe-forest'
+        backend_component = "qe-forest"
 
         # Fill in workflow template
-        workflow = gw.expval_template(backend_component, backend_specs_default,
-                qasm_circuit_default, operator_string_default)
+        workflow = gw.expval_template(
+            backend_component, backend_specs_default, qasm_circuit_default, operator_string_default
+        )
 
-        file_name = tmpdir.join('test_workflow.yaml')
+        file_name = tmpdir.join("test_workflow.yaml")
 
-        with open(file_name, 'w') as file:
+        with open(file_name, "w") as file:
             # Testing that no errors arise here
             d = yaml.dump(workflow, file)
 
     def test_unsupported_backend_component(self):
         """Test that if an unsupported backend component is input then an error is raised."""
-        backend_component = 'SomeNonExistentBackend'
+        backend_component = "SomeNonExistentBackend"
 
         # Fill in workflow template
         with pytest.raises(ValueError, match="The specified backend component is not supported."):
-            workflow = gw.expval_template(backend_component,
-                    backend_specs_default, qasm_circuit_default,
-                    operator_string_default)
+            workflow = gw.expval_template(
+                backend_component,
+                backend_specs_default,
+                qasm_circuit_default,
+                operator_string_default,
+            )
+
+    def test_matches_template(self):
+
+        backend_component = "qe-forest"
+
+        # Fill in workflow template
+        workflow = gw.expval_template(
+            backend_component, backend_specs_default, qasm_circuit_default, operator_string_default
+        )
+
+        file_name = "test_workflow.yaml"
+
+        assert workflow == test_workflow
