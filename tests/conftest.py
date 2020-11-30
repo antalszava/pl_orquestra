@@ -110,17 +110,46 @@ test_workflow = {
     "steps": steps,
     "types": types,
 }
-test_batch_res = 0.777506938122745
+test_batch_res0 = 0.777506938122745
+test_batch_res1 = 13.321
+test_batch_res2 = 1.234 
 
+# A result dictionary for 3 steps as a result of batched execution
+# The step names are not sorted ("class" entry in each nested dictionary): the
+# order of results differs from the way they were assumed to be submitted
 test_batch_dict = {
-    "expval-id0": {
+    "expval-id2312": {
+        "class": "run-circuit-and-get-expval-2",
+        "expval": {
+            "id": "expval-id/expval",
+            "list": [
+                {
+                    "id": "expval-id",
+                    "list": test_batch_res2,
+                    "parentId": "expval-id",
+                    "parentType": "test",
+                    "workflowId": "expval-id",
+                    "test": 0,
+                }
+            ],
+            "schema": "test",
+            "stepId": "expval",
+            "stepName": "run-circuit-and-get-expval-2",
+            "taskClass": "run-circuit-and-get-expval-2",
+            "taskId": "expval",
+            "workflowId": "expval",
+        },
+        "id": "expval",
+        "workflowId": "expval",
+    },
+    "expval-id000": {
         "class": "run-circuit-and-get-expval-0",
         "expval": {
             "id": "expval-id/expval",
             "list": [
                 {
                     "id": "expval-id",
-                    "list": test_batch_res,
+                    "list": test_batch_res0,
                     "parentId": "expval-id",
                     "parentType": "test",
                     "workflowId": "expval-id",
@@ -137,14 +166,14 @@ test_batch_dict = {
         "id": "expval",
         "workflowId": "expval",
     },
-    "expval-id1": {
+    "expval-id111": {
         "class": "run-circuit-and-get-expval-1",
         "expval": {
             "id": "expval-id/expval",
             "list": [
                 {
                     "id": "expval-id",
-                    "list": test_batch_res,
+                    "list": test_batch_res1,
                     "parentId": "expval-id",
                     "parentType": "test",
                     "workflowId": "expval-id",
@@ -153,8 +182,8 @@ test_batch_dict = {
             ],
             "schema": "test",
             "stepId": "expval",
-            "stepName": "run-circuit-and-get-expval-0",
-            "taskClass": "run-circuit-and-get-expval-0",
+            "stepName": "run-circuit-and-get-expval-1",
+            "taskClass": "run-circuit-and-get-expval-1",
             "taskId": "expval",
             "workflowId": "expval",
         },

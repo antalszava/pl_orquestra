@@ -31,6 +31,17 @@ backend_import_db = {
         }
 
 def step_dictionary(name_suffix):
+    """Creates a new step with a pre-defined name suffixed with the name
+    passed.
+    
+    Args:
+        name_suffix (str): The name suffix to use, usually the index of the
+            step. Such an index as suffix can be used for sorting the workflow
+            steps (e.g., for batch execution for the Orquestra device). 
+
+    Returns:
+        dict: the dictionary containing information for the step
+    """
     name = 'run-circuit-and-get-expval-' + name_suffix
     step_dict = {'name': name,
            'config': {'runtime': {'language': 'python3',

@@ -7,7 +7,7 @@ import pennylane as qml
 import pennylane.tape
 import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
-from conftest import test_batch_res, test_batch_dict
+from conftest import test_batch_res0, test_batch_res1, test_batch_res2, test_batch_dict
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}'
@@ -177,28 +177,32 @@ class TestBatchExecute:
 
     @pytest.mark.parametrize("keep", [True, False])
     def test_batch_exec(self, keep, tmpdir, monkeypatch):
+        """Test that the batch_execute method returns the desired result and
+        that the result preserves the order in which circuits were
+        submitted."""
 
         qml.enable_tape()
 
         with qml.tape.QuantumTape() as tape1:
-            qml.RX(0.432, wires=0)
-            qml.RY(0.543, wires=0)
-            qml.CNOT(wires=[0, 'a'])
             qml.RX(0.133, wires='a')
+            qml.CNOT(wires=[0, 'a'])
             qml.expval(qml.PauliZ(wires=[0]))
 
         with qml.tape.QuantumTape() as tape2:
             qml.RX(0.432, wires=0)
             qml.RY(0.543, wires=0)
-            qml.CNOT(wires=[0, 'a'])
-            qml.RX(0.133, wires='a')
             qml.expval(qml.PauliZ(wires=[0]))
 
-        circuits = [tape1, tape2]
+        with qml.tape.QuantumTape() as tape3:
+            qml.RX(0.432, wires=0)
+            qml.expval(qml.PauliZ(wires=[0]))
+
+        circuits = [tape1, tape2, tape3]
 
         dev = qml.device('orquestra.forest', wires=3)
 
         assert not os.path.exists(tmpdir.join("expval.yaml"))
+
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
@@ -209,8 +213,11 @@ class TestBatchExecute:
                     test_batch_dict)
 
             res = dev.batch_execute(circuits)
-            expected_arr = np.array([test_batch_res])
-            assert all(np.allclose(r, expected_arr) for r in res)
+
+            # We expect that the results are in the correct order
+            assert np.allclose(res[0], test_batch_res0)
+            assert np.allclose(res[1], test_batch_res1)
+            assert np.allclose(res[2], test_batch_res2)
             file_kept = os.path.exists(tmpdir.join("expval.yaml"))
 
         qml.disable_tape()

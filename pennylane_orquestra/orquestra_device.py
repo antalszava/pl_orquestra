@@ -173,7 +173,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         results = []
 
-        # Iterating through the circuits with batches
+        # Iterating through the circuits based on the allowed number of
+        # circuits per workflow
         while idx < len(circuits): 
             end_idx = idx + batch_size
             batch = circuits[idx:end_idx]
@@ -184,13 +185,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         return results
 
     def _batch_execute(self, circuits, idx, **kwargs):
-        """
+        """Creates a multi-step workflow for executing a batch of circuits.
 
         Args:
-            circuits (list): a list of ciruits represented as ``QuantumTape``
-                objects
+            circuits (list[QuantumTape]): circuits to execute on the device
             idx (int): the index of the batch used to name the workflow
 
+        Returns:
+            list[array[float]]: list of measured value(s) for the batch
         """
         for circuit in circuits:
             obs = circuit.observables
@@ -230,6 +232,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # 6. Loop until finished
         data = loop_until_finished(workflow_id)
+
+        # Due to parallel execution, results might have been written in any order
+        # Sort the results by the step name
+        data = {k: v for k, v in sorted(data.items(), key=lambda item: item[1]['expval']['stepName'])}
 
         # There are multiple steps
         result_dicts = [v for k,v in data.items()]
