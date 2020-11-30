@@ -199,7 +199,7 @@ class TestBatchExecute:
 
         circuits = [tape1, tape2, tape3]
 
-        dev = qml.device('orquestra.forest', wires=3)
+        dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
 
         assert not os.path.exists(tmpdir.join("expval.yaml"))
 
@@ -218,6 +218,61 @@ class TestBatchExecute:
             assert np.allclose(res[0], test_batch_res0)
             assert np.allclose(res[1], test_batch_res1)
             assert np.allclose(res[2], test_batch_res2)
-            file_kept = os.path.exists(tmpdir.join("expval.yaml"))
+            file_kept = os.path.exists(tmpdir.join("expval-0.yaml"))
 
+        assert file_kept if keep else not file_kept
+        qml.disable_tape()
+
+    @pytest.mark.parametrize("keep", [True, False])
+    def test_batch_exec_multiple_workflow(self, keep, tmpdir, monkeypatch):
+        """Test that the batch_execute method returns the desired result and
+        that the result preserves the order in which circuits were submitted
+        when batches are created in multiple workflows ."""
+
+        qml.enable_tape()
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.RX(0.133, wires='a')
+            qml.CNOT(wires=[0, 'a'])
+            qml.expval(qml.PauliZ(wires=[0]))
+
+        with qml.tape.QuantumTape() as tape2:
+            qml.RX(0.432, wires=0)
+            qml.RY(0.543, wires=0)
+            qml.expval(qml.PauliZ(wires=[0]))
+
+        with qml.tape.QuantumTape() as tape3:
+            qml.RX(0.432, wires=0)
+            qml.expval(qml.PauliZ(wires=[0]))
+
+        circuits = [tape1, tape2, tape3]
+
+        # Only allow a single circuit for each workflow
+        dev = qml.device('orquestra.forest', wires=3, batch_size=1, keep_workflow_files=keep)
+
+        assert not os.path.exists(tmpdir.join("expval-0.yaml"))
+        assert not os.path.exists(tmpdir.join("expval-1.yaml"))
+        assert not os.path.exists(tmpdir.join("expval-2.yaml"))
+
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+
+            # Mocking Popen disables submitting to the Orquestra platform
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(pennylane_orquestra.orquestra_device,
+                    "loop_until_finished", lambda *args, **kwargs:
+                    test_batch_dict)
+
+            res = dev.batch_execute(circuits)
+
+            # We expect that the results are in the correct order
+            assert np.allclose(res[0], test_batch_res0)
+            assert np.allclose(res[1], test_batch_res1)
+            assert np.allclose(res[2], test_batch_res2)
+            file0_kept = os.path.exists(tmpdir.join("expval-0.yaml"))
+            file1_kept = os.path.exists(tmpdir.join("expval-1.yaml"))
+            file2_kept = os.path.exists(tmpdir.join("expval-2.yaml"))
+
+        files_kept = file0_kept and file1_kept and file2_kept
+        assert files_kept and file0_kept if keep else not files_kept
         qml.disable_tape()

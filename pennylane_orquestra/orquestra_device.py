@@ -77,8 +77,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # TODO: allow noise_model and device_connectivity options
 
         self.backend_device = kwargs.get('backend_device', None)
-        self._latest_id = None
         self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
+        self._batch_size = kwargs.get("batch_size", 10)
+        self._latest_id = None
         self._backend_specs = None
         # self._pre_rotated_state = self._state
 
@@ -163,7 +164,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
     def batch_execute(self, circuits, **kwargs):
         # TODO: do we pass the batch_size here or to the device?
-        batch_size = kwargs.get("batch_size", 10)
 
 
         # 1. Create the backend specs based on Device options and run_kwargs
@@ -176,11 +176,11 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Iterating through the circuits based on the allowed number of
         # circuits per workflow
         while idx < len(circuits): 
-            end_idx = idx + batch_size
+            end_idx = idx + self._batch_size
             batch = circuits[idx:end_idx]
             res = self._batch_execute(batch, idx, **kwargs)
             results.extend(res)
-            idx += batch_size
+            idx += self._batch_size
 
         return results
 
