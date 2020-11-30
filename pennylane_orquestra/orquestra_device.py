@@ -178,10 +178,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             end_idx = idx + batch_size
             batch = circuits[idx:end_idx]
             res = self._batch_execute(batch, idx, **kwargs)
-            results.append(res)
+            results.extend(res)
             idx += batch_size
 
-        return np.array(results)
+        return results
 
     def _batch_execute(self, circuits, idx, **kwargs):
         """
