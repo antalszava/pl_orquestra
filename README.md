@@ -32,6 +32,8 @@ The `backend_device` option can be passed as a keyword argument to the
 
 **Examples**
 
+Examples can be run after authentication using the `qe` command-line tool happened.
+
 *Using `QulacsSimulator`*
 
 ```python
