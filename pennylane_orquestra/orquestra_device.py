@@ -125,11 +125,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         try:
             qasm_circuit = self.serialize_circuit(circuit)
         except AttributeError:
+            # QuantumTape case: need to extract the CircuitGraph
             qasm_circuit = self.serialize_circuit(circuit.graph)
 
         # 3. Create the qubit operators
         ops = [self.serialize_operator(obs) for obs in circuit.observables]
         ops_json = json.dumps(ops)
+
+        # Single step: need to nest the operators into a list
         ops = [ops_json]
         qasm_circuit = [qasm_circuit]
 
@@ -154,10 +157,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Obtain the value for each operator
         results = [res_dict['list'] for res_dict in list_of_result_dicts]
 
-        if len(results) > 1:
-            res = np.array(results)
-        else:
-            res = results[0]
+        res = self._asarray(results)
 
         return res
 
@@ -187,7 +187,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         """
 
         Args:
-            circuits (list): a list of ciruits represented as ``CircuitGraph``
+            circuits (list): a list of ciruits represented as ``QuantumTape``
                 objects
             idx (int): the index of the batch used to name the workflow
 
@@ -202,25 +202,24 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
             self.check_validity(circuit.operations, circuit.observables)
 
-            # TODO: process hashes
+            # TODO: process hashes as a batch
             self._circuit_hash = circuit.hash
 
         # 2. Create qasm strings from the circuits
-
-        try:
-            qasm_circuit = self.serialize_circuit(circuits[0])
-        except AttributeError:
-            circuit = [circ.graph for circ in circuits]
+        # Extract the CircuitGraph object from QuantumTape
+        circuits = [circ.graph for circ in circuits]
         qasm_circuits = [self.serialize_circuit(circuit) for circuit in circuits]
 
-        # 3. Create the qubit operators
+        # 3. Create the qubit operators of observables for each circuit
         ops = [[self.serialize_operator(obs) for obs in circuit.observables] for circuit in circuits]
-        ops_json = json.dumps(ops)
+
+        # Multiple steps: need to create json strings as elements of the list
+        ops = [json.dumps(o) for o in ops]
 
         # 4. Create the workflow file
         workflow = expval_template(
             self.qe_component,
-            backend_specs, qasm_circuits, ops_json, **kwargs
+            self._backend_specs, qasm_circuits, ops, **kwargs
         )
         filename = f'expval-{str(idx)}.yaml'
         filepath = write_workflow_file(filename, workflow)
@@ -236,16 +235,13 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         result_dicts = [v for k,v in data.items()]
         list_of_result_dicts = [dct['expval']['list'] for dct in result_dicts]
 
-        # Obtain the value for each operator
-        results = [res_dict['list'] for res_dict in list_of_result_dicts]
+        # Obtain the results for each step
+        results = []
+        for res_step in list_of_result_dicts:
+            extracted_results = [res_dict['list'] for res_dict in res_step]
+            results.append(self._asarray(extracted_results))
 
-        if len(results) > 1:
-            res = np.array(results)
-        else:
-            res = results[0]
-
-        # TODO: How to return the batch results?
-        return res
+        return results
 
     @property
     def latest_id(self):

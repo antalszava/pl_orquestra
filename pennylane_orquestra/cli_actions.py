@@ -166,7 +166,13 @@ def loop_until_finished(workflow_id):
     except IndexError:
         print("".join(get_workflow_results(workflow_id)))
 
-    with urllib.request.urlopen(location) as url:
-        data = json.loads(url.read().decode())
+    try:
+        with urllib.request.urlopen(location) as url:
+            data = json.loads(url.read().decode())
+    except UnboundLocalError:
+        # This error is raised if the workflow failed and no URL for the
+        # results was obtained
+        raise ValueError(f'Something went wrong with the results. {current_status}')
+
 
     return data

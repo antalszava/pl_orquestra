@@ -4,8 +4,10 @@ import os
 import numpy as np
 
 import pennylane as qml
+import pennylane.tape
 import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
+from conftest import test_batch_res, test_batch_dict
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}'
@@ -48,6 +50,7 @@ class TestBaseDevice:
 
     @pytest.mark.parametrize("keep", [True, False])
     def test_keep_workflow_file(self, keep, tmpdir, monkeypatch):
+        """Test the option for keeping/deleting the workflow file."""
 
         file_name = 'test_workflow.yaml'
         dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
@@ -56,6 +59,8 @@ class TestBaseDevice:
         assert not os.path.exists(tmpdir.join("expval.yaml"))
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+
+            # Mocking Popen disables submitting to the Orquestra platform
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
@@ -166,3 +171,46 @@ class TestSerializeOperator:
         """Test that a circuit that is serialized correctly without rotations for
         a simulator backend"""
         pass
+
+class TestBatchExecute:
+    """Test the integration of the device with PennyLane."""
+
+    @pytest.mark.parametrize("keep", [True, False])
+    def test_batch_exec(self, keep, tmpdir, monkeypatch):
+
+        qml.enable_tape()
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.RX(0.432, wires=0)
+            qml.RY(0.543, wires=0)
+            qml.CNOT(wires=[0, 'a'])
+            qml.RX(0.133, wires='a')
+            qml.expval(qml.PauliZ(wires=[0]))
+
+        with qml.tape.QuantumTape() as tape2:
+            qml.RX(0.432, wires=0)
+            qml.RY(0.543, wires=0)
+            qml.CNOT(wires=[0, 'a'])
+            qml.RX(0.133, wires='a')
+            qml.expval(qml.PauliZ(wires=[0]))
+
+        circuits = [tape1, tape2]
+
+        dev = qml.device('orquestra.forest', wires=3)
+
+        assert not os.path.exists(tmpdir.join("expval.yaml"))
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+
+            # Mocking Popen disables submitting to the Orquestra platform
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(pennylane_orquestra.orquestra_device,
+                    "loop_until_finished", lambda *args, **kwargs:
+                    test_batch_dict)
+
+            res = dev.batch_execute(circuits)
+            expected_arr = np.array([test_batch_res])
+            assert all(np.allclose(r, expected_arr) for r in res)
+            file_kept = os.path.exists(tmpdir.join("expval.yaml"))
+
+        qml.disable_tape()

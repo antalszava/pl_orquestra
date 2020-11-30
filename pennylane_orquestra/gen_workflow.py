@@ -57,11 +57,14 @@ def expval_template(component, backend_specs, circuits, operators, **kwargs):
         component (str): the name of the Orquestra component to use
         backend_specs (str): the Orquestra backend specifications as a json
             string
-        circuits (list): list of circuits where each circuit is represented as
-            an OpenQASM 2.0 program
-        operators (list): a nested list of operators, each operator is a string
-            in an ``openfermion.QubitOperator`` or ``openfermion.IsingOperator``
-            representation
+        circuits (list): list of OpenQASM 2.0 programs, each representing a
+            circuit as an input for a workflow step
+        operators (list): A list of json strings, each representing a list of
+            operators as an input for a workflow step. Each operator is a string in
+            an ``openfermion.QubitOperator`` or ``openfermion.IsingOperator``
+            representation. For example, ``['["1 [Z0]", "1 [Z1]"]']`` is an
+            input for a single step that returns the expectation value of two
+            observables: ``Z0`` and ``Z1``.
     
     Keyword arguments:
         noise_model='None' (str): the noise model to use

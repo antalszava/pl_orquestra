@@ -58,7 +58,12 @@ second_in = [
     {"circuit": second_circuit, "type": "string"},
 ]
 
-second_step = {"name": second_name, "config": second_config, "outputs": second_out, "inputs": second_in}
+second_step = {
+    "name": second_name,
+    "config": second_config,
+    "outputs": second_out,
+    "inputs": second_in,
+}
 
 steps = [first_step, second_step]
 
@@ -104,4 +109,56 @@ test_workflow = {
     "imports": imports_workflow,
     "steps": steps,
     "types": types,
+}
+test_batch_res = 0.777506938122745
+
+test_batch_dict = {
+    "expval-id0": {
+        "class": "run-circuit-and-get-expval-0",
+        "expval": {
+            "id": "expval-id/expval",
+            "list": [
+                {
+                    "id": "expval-id",
+                    "list": test_batch_res,
+                    "parentId": "expval-id",
+                    "parentType": "test",
+                    "workflowId": "expval-id",
+                    "test": 0,
+                }
+            ],
+            "schema": "test",
+            "stepId": "expval",
+            "stepName": "run-circuit-and-get-expval-0",
+            "taskClass": "run-circuit-and-get-expval-0",
+            "taskId": "expval",
+            "workflowId": "expval",
+        },
+        "id": "expval",
+        "workflowId": "expval",
+    },
+    "expval-id1": {
+        "class": "run-circuit-and-get-expval-1",
+        "expval": {
+            "id": "expval-id/expval",
+            "list": [
+                {
+                    "id": "expval-id",
+                    "list": test_batch_res,
+                    "parentId": "expval-id",
+                    "parentType": "test",
+                    "workflowId": "expval-id",
+                    "test": 0,
+                }
+            ],
+            "schema": "test",
+            "stepId": "expval",
+            "stepName": "run-circuit-and-get-expval-0",
+            "taskClass": "run-circuit-and-get-expval-0",
+            "taskId": "expval",
+            "workflowId": "expval",
+        },
+        "id": "expval",
+        "workflowId": "expval",
+    },
 }
