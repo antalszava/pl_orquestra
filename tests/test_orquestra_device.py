@@ -250,6 +250,7 @@ class TestBatchExecute:
         # Only allow a single circuit for each workflow
         dev = qml.device('orquestra.forest', wires=3, batch_size=1, keep_workflow_files=keep)
 
+        # Check that no workflow files were created before
         assert not os.path.exists(tmpdir.join("expval-0.yaml"))
         assert not os.path.exists(tmpdir.join("expval-1.yaml"))
         assert not os.path.exists(tmpdir.join("expval-2.yaml"))
@@ -273,6 +274,7 @@ class TestBatchExecute:
             file1_kept = os.path.exists(tmpdir.join("expval-1.yaml"))
             file2_kept = os.path.exists(tmpdir.join("expval-2.yaml"))
 
+        # Check that workflow files were either all kept or all deleted
         files_kept = file0_kept and file1_kept and file2_kept
         assert files_kept and file0_kept if keep else not files_kept
         qml.disable_tape()
