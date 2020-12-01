@@ -306,7 +306,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         """
         if self.needs_rotations:
             obs_wires = observable.wires
-            wires = self.wires.index(obs_wires)
+            wires = self.wires.indices(obs_wires)
             op_str = self.pauliz_operator_string(wires)
         else:
             op_str = self.qubit_operator_string(observable)
@@ -377,8 +377,12 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             need_decomposition = observable.name not in accepted_obs
 
         if need_decomposition:
+
+            # Decompose the matrix of the observable
+            # This removes information about the wire labels used
             coeffs, obs_list = decompose_hamiltonian(observable.matrix)
 
+            inverted_wire_map = {idx:v for idx, v in enumerate(self.wires)}
             for idx in range(len(obs_list)):
                 obs = obs_list[idx]
 
@@ -386,6 +390,12 @@ class OrquestraDevice(QubitDevice, abc.ABC):
                     # Convert terms to Tensor such that _terms_to_qubit_operator
                     # can be used
                     obs_list[idx] = Tensor(obs)
+
+                # The decomposition involved using consecutive integer wires
+                # Need to use the custom wire labels, use the inverted wire map
+                for o in obs_list[idx].obs:
+                    mapped_wires = [inverted_wire_map[wire] for wire in o.wires.tolist()]
+                    o._wires = Wires(mapped_wires)
 
         else:
             if not isinstance(observable, Tensor):

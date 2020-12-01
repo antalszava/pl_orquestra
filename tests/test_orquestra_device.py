@@ -144,33 +144,76 @@ obs_serialize= [
     (qml.PauliY(wires=[0]) @ qml.Identity(wires=[1]), '1 [Y0]'),
     (qml.PauliZ(wires=[0]) @ qml.Identity(wires=[1]), '1 [Z0]'),
     (qml.Hermitian(mx, wires=[0, 1]) @ qml.Identity(wires=[2]), "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"),
+]
 
+obs_serialize_custom_labels = [
     # Custom wires
-    (qml.PauliZ(wires=['w']), '1 [Z0]'),
+    (qml.PauliZ(wires=['a']), '1 [Z0]'),
+    (qml.PauliX(wires=['c']), '1 [X2]'),
     (qml.Hermitian(mx, wires=['a', 'b']) @ qml.Identity(wires=['c']), "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"),
 ]
 
+serialize_needs_rot = [
+        (qml.PauliZ(0) @ qml.PauliZ(2), '[Z0 Z2]'),
+        (qml.PauliZ(2), '[Z2]'),
+        (qml.PauliZ(0) @ qml.PauliZ(1) @ qml.PauliZ(2), '[Z0 Z1 Z2]'),
+
+        # Rotations need to be included
+        (qml.PauliY(2), '[Z2]'),
+        (qml.PauliX(0) @ qml.PauliY(2), '[Z0 Z2]'),
+        (qml.PauliY(0) @ qml.PauliX(1) @ qml.PauliY(2), '[Z0 Z1 Z2]')
+]
 
 class TestSerializeOperator:
     """Test the serialize_operator function"""
 
     @pytest.mark.parametrize("wires, expected", [([2], '[Z2]'), ([0, 2], '[Z0 Z2]'), ([0, 1, 2], '[Z0 Z1 Z2]')])
     def test_pauliz_operator_string(self, wires, expected):
-        dev = QeIBMQDevice(wires=1, shots=1000, analytic=False)
+        """Test that an operator is serialized correctly on a device with
+        consecutive integer wires."""
+        dev = QeIBMQDevice(wires=3, shots=1000, analytic=False)
         op_str = dev.pauliz_operator_string(wires)
         assert op_str == expected
 
     @pytest.mark.parametrize("obs, expected", obs_serialize)
-    def test_qubit_operator_string_needs_decompose(self, obs, expected):
-        dev = QeIBMQDevice(wires=1, shots=1000, analytic=False)
+    def test_qubit_operator_consec_int_wires(self, obs, expected):
+        """Test that an operator is serialized correctly on a device with
+        consecutive integer wires."""
+        dev = QeIBMQDevice(wires=3, shots=1000, analytic=False)
         op_str = dev.qubit_operator_string(obs)
         assert op_str == expected
 
-    @pytest.mark.parametrize("wires", [[0], list(range(4)), ['a'], ['a','b']])
-    def test_serialize_operator(self, wires):
-        """Test that a circuit that is serialized correctly without rotations for
-        a simulator backend"""
-        pass
+    @pytest.mark.parametrize("obs, expected", obs_serialize_custom_labels)
+    def test_qubit_operator_custom_labels(self, obs, expected):
+        """Test that an operator is serialized correctly on a device with
+        custom wire labels."""
+        dev = QeIBMQDevice(wires=['a','b','c'], shots=1000, analytic=False)
+        op_str = dev.qubit_operator_string(obs)
+        assert op_str == expected
+
+    @pytest.mark.parametrize("obs, expected", serialize_needs_rot)
+    def test_serialize_operator_needs_rotation(self, obs, expected):
+        """Test that a device that needs to include rotations serializes the
+        operators correctly."""
+        dev = QeIBMQDevice(wires=3, shots=1000, analytic=False)
+        op_str = dev.serialize_operator(obs)
+        assert op_str == expected
+
+    @pytest.mark.parametrize("obs, expected", obs_serialize)
+    def test_serialize_operator_no_rot(self, obs, expected):
+        """Test that a device that does not need to include rotations
+        serializes the operators with consecutive integer wires correctly."""
+        dev = QeQiskitDevice(wires=3, shots=1000, analytic=False)
+        op_str = dev.serialize_operator(obs)
+        assert op_str == expected
+
+    @pytest.mark.parametrize("obs, expected", obs_serialize_custom_labels)
+    def test_serialize_operator_no_rot_custom_labels(self, obs, expected):
+        """Test that a device that does not need to include rotations
+        serializes the operators with custom labels correctly."""
+        dev = QeQiskitDevice(wires=['a','b','c'], shots=1000, analytic=False)
+        op_str = dev.serialize_operator(obs)
+        assert op_str == expected
 
 class TestBatchExecute:
     """Test the integration of the device with PennyLane."""
