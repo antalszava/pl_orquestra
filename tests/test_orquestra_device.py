@@ -215,6 +215,32 @@ class TestSerializeOperator:
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
 
+    @pytest.mark.parametrize("device", [QeIBMQDevice, QeQiskitDevice])
+    def test_operator_with_invalid_wire(self, device, monkeypatch):
+        """Test that a device with custom wire labels raises an error when an
+        invalid wire is used in the operator definition.
+        
+        This test is meant to check that the internal wire mappings do not
+        introduce false positive behaviour when using custom wire labels.
+        """
+        dev = device(wires=['a','b','c'], shots=1000, analytic=False)
+
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+
+            # Mocking Popen disables submitting to the Orquestra platform
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(pennylane_orquestra.orquestra_device,
+                    "loop_until_finished", lambda *args, **kwargs:
+                    test_batch_dict)
+
+            @qml.qnode(dev)
+            def circuit():
+                return qml.expval(qml.PauliZ(0))
+
+            with pytest.raises(qml.qnodes.base.QuantumFunctionError, match="Operation PauliZ applied to invalid wire"):
+                circuit()
+
 class TestBatchExecute:
     """Test the integration of the device with PennyLane."""
 
