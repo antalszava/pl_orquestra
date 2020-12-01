@@ -30,6 +30,8 @@ def qe_get(workflow_id, option='workflow'):
 def qe_submit(filepath, keep_file=False):
     """Function for submitting a workflow via a CLI call.
     
+    Handling response messages was based on using Orquestra API v1.0.0.
+
     Args:
         filepath (str): the filepath for the workflow file
 
@@ -48,8 +50,10 @@ def qe_submit(filepath, keep_file=False):
                                universal_newlines=True)
     res = process.stdout.readlines()
 
-    success_msg = 'Successfully submitted workflow to quantum engine!\n'
-    if success_msg not in res:
+    # As per Orquestra API v1.0.0, we assume that the result message has a
+    # substring referring to successfuly submission
+    details = "".join(res)
+    if 'Success' not in details:
         raise ValueError(res)
 
     if not keep_file:
@@ -121,6 +125,9 @@ def write_workflow_file(filename, workflow):
 def loop_until_finished(workflow_id, timeout=300):
     """Loops until the workflow execution has finished by querying workflow
     details using the workflow ID.
+
+    The flows of messages and the checks were based on responses obtained when
+    using Orquestra API v1.0.0.
 
     Args:
         workflow_id (str): the ID of the workflow for which to return the

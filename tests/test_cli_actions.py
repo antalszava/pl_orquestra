@@ -9,7 +9,11 @@ from pennylane_orquestra.cli_actions import qe_submit, write_workflow_file, loop
 from conftest import backend_specs_default, qasm_circuit_default, operator_string_default
 
 class TestCLIFunctions:
-    """Test that workflow generation works as expected."""
+    """Test functions for CLI actions work as expected.
+    
+    These tests are meant to be unit tests without sending any requests to
+    Orquestra.
+    """
 
     def test_write_workflow_file(self, tmpdir, monkeypatch):
         """Test that filling in the workflow template for getting expectation
