@@ -1,6 +1,7 @@
 import pytest
 import subprocess
 import os
+import time
 import numpy as np
 
 import pennylane as qml
@@ -74,6 +75,34 @@ class TestBaseDevice:
             assert circuit() == 123456789
             file_kept = os.path.exists(tmpdir.join("expval.yaml"))
             assert file_kept if keep else not file_kept
+
+    @pytest.mark.parametrize("timeout", [1,4])
+    def test_timeout(self, timeout, tmpdir, monkeypatch):
+        """Test the option for keeping/deleting the workflow file."""
+
+        file_name = 'test_workflow.yaml'
+        dev = qml.device('orquestra.forest', wires=3, timeout=timeout)
+        mock_res_dict = {'First': {'expval': {'list': [{'list': 123456789}]}}}
+
+        assert dev._timeout == timeout
+        assert not os.path.exists(tmpdir.join("expval.yaml"))
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+            m.setattr(pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: "Test res")
+
+            # Mocking Popen disables submitting to the Orquestra platform
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+
+            @qml.qnode(dev)
+            def circuit():
+                qml.PauliX(0)
+                return qml.expval(qml.PauliZ(0))
+
+            start = time.time()
+            with pytest.raises(TimeoutError, match="The workflow results for workflow"):
+                circuit()
+            end =  time.time()
+            assert end-start >= timeout
 
 class TestCreateBackendSpecs:
     """Test the create_backend_specs function"""

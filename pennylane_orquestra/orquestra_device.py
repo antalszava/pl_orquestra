@@ -29,7 +29,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             These files are placed into a user specific data folder specified
             by the output of ``appdirs.user_data_dir("pennylane-orquestra",
             "Xanadu")``.
-    
+        timeout=300 (int): seconds to wait until raising a TimeoutError
     """
 
     name = "Orquestra device"
@@ -78,6 +78,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         self.backend_device = kwargs.get('backend_device', None)
         self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
+        self._timeout = kwargs.get("timeout", 300)
         self._batch_size = kwargs.get("batch_size", 10)
         self._latest_id = None
         self._backend_specs = None
@@ -150,7 +151,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self._latest_id = workflow_id
 
         # 6. Loop until finished
-        data = loop_until_finished(workflow_id)
+        data = loop_until_finished(workflow_id, timeout=self._timeout)
 
         # Assume that there's only one step
         list_of_result_dicts = [v for k,v in data.items()][0]['expval']['list']
@@ -231,7 +232,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self._latest_id = workflow_id
 
         # 6. Loop until finished
-        data = loop_until_finished(workflow_id)
+        data = loop_until_finished(workflow_id, timeout=self._timeout)
 
         # Due to parallel execution, results might have been written in any order
         # Sort the results by the step name
