@@ -1,3 +1,20 @@
+import subprocess
+
+# Auxiliary functions
+def qe_list_workflow():
+    """Function for a CLI call to list workflows.
+
+    This CLI call needs the caller to be logged in to Orquestra. It is an
+    inexpensive way of checking that the caller has been authenticated with the
+    Orquestra platform.
+    """
+    process = subprocess.Popen(
+        ["qe", "list", "workflow"], stdout=subprocess.PIPE, universal_newlines=True
+    )
+    return process.stdout.readlines()
+
+# Auxiliary data
+
 # Default data that are inserted into a workflow template
 resources_default = {"cpu": "1000m", "memory": "1Gi", "disk": "10Gi"}
 backend_specs_default = '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 100}'

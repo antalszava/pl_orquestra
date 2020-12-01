@@ -6,6 +6,8 @@ from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
 import pennylane_orquestra.gen_workflow as gw
 from pennylane_orquestra.cli_actions import qe_submit
 
+from conftest import qe_list_workflow
+
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}'
 
