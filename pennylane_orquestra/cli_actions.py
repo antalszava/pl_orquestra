@@ -132,45 +132,52 @@ def loop_until_finished(workflow_id, timeout=300):
     Returns:
         dict: the resulting dictionary parsed from a json file
     """
-    res = get_workflow_results(workflow_id)
-
-    strips = [output.strip() for output in res]
-    message = strips[0]
-
     start = time.time()
-    while "is being processed. Please check back later." not in message:
-        res = get_workflow_results(workflow_id)
+    query_results = True
+    tries = 0
+    url = None
+    while query_results:
+        tries += 1
 
-        strips = [output.strip() for output in res]
-        message = strips[0]
+        # Check if we've exceeded the timeout time, otherwise loop further
         if time.time()-start > timeout:
             current_status = workflow_details(workflow_id)
             raise TimeoutError(f'The workflow results for workflow '
                     f'{workflow_id} were not obtained after {timeout/60} minutes. '
                     f'{current_status}')
 
-    if "is being processed. Please check back later." not in message:
-        current_status = workflow_details(workflow_id)
-        raise ValueError(f'Something went wrong with the results. {current_status}')
+        if tries % 20 == 0:
 
-    if "aggregated workflow result request has failed" in message:
-        raise ValueError('Something went wrong with executing your workflow.')
+            # Check if the status shows that the workflow failed
+            status = workflow_details(workflow_id)
+            details_string = "".join(status).split()
+            if "Failed" in details_string:
+                raise ValueError(f'Something went wrong with executing the workflow. {status}')
 
-    results = get_workflow_results(workflow_id)
+        results = get_workflow_results(workflow_id)
 
-    # Try to get the results
-    try:
-        location = results[1].split()[1]
-    except IndexError:
-        print("".join(get_workflow_results(workflow_id)))
+        # 1. Attempt to extract a location
+        try:
+            # Assume that the second line of the message contains the URL
+            location = results[1].split()[1]
+        except IndexError:
+            # The format of the results were not like the message with URL
+            continue
 
-    try:
-        with urllib.request.urlopen(location) as url:
-            data = json.loads(url.read().decode())
-    except UnboundLocalError:
-        # This error is raised if the workflow failed and no URL for the
-        # results was obtained
-        raise ValueError(f'Something went wrong with the results. {current_status}')
+        # 2. Check that the location is a valid URL
+        try:
 
+            # We expect that this fails if no valid URL location was outputted
+            url = urllib.request.urlopen(location)
+
+            # If we managed to get the URL, we can stop querying
+            query_results = False
+
+        except urllib.error.URLError:
+            continue
+
+    # 3. Obtain the data
+    with url:
+        data = json.loads(url.read().decode())
 
     return data
