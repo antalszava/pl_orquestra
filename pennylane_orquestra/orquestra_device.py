@@ -10,7 +10,7 @@ import numpy as np
 
 from pennylane import QubitDevice, DeviceError
 from pennylane.operation import Sample, Variance, Expectation, Probability, State, Tensor
-from pennylane.ops import QubitStateVector, BasisState, QubitUnitary, CRZ, PhaseShift, Identity
+from pennylane.ops import QubitStateVector, BasisState, CRZ, PhaseShift, Identity
 from pennylane.wires import Wires
 from pennylane.utils import decompose_hamiltonian
 
@@ -59,7 +59,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         "PauliZ",
         "PhaseShift",
         "QubitStateVector",
-        "QubitUnitary",
         "RX",
         "RY",
         "RZ",
@@ -71,7 +70,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         "Toffoli",
     }
 
-    observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
+    observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard"}
 
     def __init__(self, wires, shots=1000, analytic=True, **kwargs):
         super().__init__(wires=wires, shots=shots, analytic=analytic)
