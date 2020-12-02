@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import expval
 
-from qiskit import QiskitError
+from qiskit import QiskitError, IBMQ
 from qiskit.providers.ibmq.exceptions import IBMQProviderError
 
 import qeforest
@@ -91,17 +91,28 @@ class TestExpvalSampling:
         expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, op)
         assert math.isclose(lst[0][0], 0.0, abs_tol=10e-2)
 
+@pytest.fixture
+def token():
+    t = os.getenv("IBMQX_TOKEN_TEST", None)
+
+    if t is None:
+        pytest.skip("Skipping test, no IBMQ token available")
+
+    yield t
+    IBMQ.disable_account()
+
 class TestIBMQ:
     """Test the IBMQ device."""
 
-    @pytest.mark.xfail(raises=IBMQProviderError)
-    def test_run_circuit_and_get_expval_identity_ibmq(self, monkeypatch, tmpdir):
+    @pytest.mark.parametrize("op", ['["[Z0]"]', '["[Z1]"]', '["[Z2]"]', '["[]"]'])
+    def test_run_circuit_and_get_expval_simple_ibmq(self, token, op, monkeypatch, tmpdir):
+        """Test running an empty circuit."""
         local_list = []
 
+        IBMQ.enable_account(token)
         backend_specs = '{"module_name": "qeqiskit.backend", "function_name": "QiskitBackend", "device_name": "ibmq_qasm_simulator", "n_samples": 8192}'
 
-        simple_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\n'
-        op = '["[Z0]"]'
+        simple_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3];\ncreg c[3];\n'
 
         lst = []
 

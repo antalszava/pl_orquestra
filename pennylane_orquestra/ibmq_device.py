@@ -22,4 +22,14 @@ class QeIBMQDevice(OrquestraDevice):
     qe_function_name = "QiskitBackend"
 
     def __init__(self, wires, shots=1024, backend_device="ibmq_qasm_simulator", **kwargs):
+
+        token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)
+        url = os.getenv("IBMQX_URL") or kwargs.get("ibmqx_url", None)
+
+        if token is not None:
+            # token was provided by the user, so attempt to enable an
+            # IBM Q account manually
+            ibmq_kwargs = {"url": url} if url is not None else {}
+            IBMQ.enable_account(token, **ibmq_kwargs)
+
         super().__init__(wires, backend_device=backend_device, shots=shots, **kwargs)
