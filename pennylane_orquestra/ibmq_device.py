@@ -2,6 +2,7 @@
 The OrquestraQiskitdevice class for PennyLane-Orquestra.
 """
 import numpy as np
+import warnings
 import os
 
 from pennylane import QubitDevice, DeviceError
@@ -10,12 +11,12 @@ from pennylane.ops import QubitStateVector, BasisState, QubitUnitary, CRZ, Phase
 from pennylane.wires import Wires
 
 
-from .qiskit_device import QeQiskitDevice
+from .orquestra_device import OrquestraDevice
 from . import __version__
 
 
 
-class QeIBMQDevice(QeQiskitDevice):
+class QeIBMQDevice(OrquestraDevice):
     """The Orquestra IBMQ device."""
     short_name = "orquestra.ibmq"
 
@@ -25,13 +26,22 @@ class QeIBMQDevice(QeQiskitDevice):
 
     def __init__(self, wires, shots=1024, backend_device="ibmq_qasm_simulator", **kwargs):
 
-        token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)
-        url = os.getenv("IBMQX_URL") or kwargs.get("ibmqx_url", None)
+        self._token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)
 
-        if token is not None:
-            # token was provided by the user, so attempt to enable an
-            # IBM Q account manually
-            ibmq_kwargs = {"url": url} if url is not None else {}
-            IBMQ.enable_account(token, **ibmq_kwargs)
+        if self._token is None:
+            raise ValueError("Please pass a valid IBMQX token to the device using the 'ibmqx_token' argument.")
 
+        if "analytic" in kwargs and kwargs["analytic"]:
+            # Raise a warning if the analytic attribute was set to True
+            warnings.warn("The {self.short_name} device cannot be used in "
+                    "analytic mode. Results are based on sampling.")
+
+        kwargs["analytic"] = False
         super().__init__(wires, backend_device=backend_device, shots=shots, **kwargs)
+
+    def create_backend_specs(self):
+        backend_dict = super().create_backend_specs()
+
+        # Plug in the IBMQ token
+        backend_dict["api_token"] = self._token
+        return backend_dict

@@ -9,6 +9,8 @@ from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
 import pennylane_orquestra.gen_workflow as gw
 from pennylane_orquestra.cli_actions import qe_submit, workflow_details
 
+from qiskit import IBMQ
+
 from conftest import qe_list_workflow, backend_specs_default, operator_string_default, qasm_circuit_default
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator"}'
@@ -143,7 +145,7 @@ def token():
 class TestOrquestraIBMQIntegration:
     def test_apply_x(self, token):
         """Test a simple circuit that applies PauliX on the first wire."""
-        dev = qml.device('orquestra.ibmq', wires=3, token=token)
+        dev = qml.device('orquestra.ibmq', wires=3, ibmqx_token=token)
 
         # Skip if has not been authenticated with Orquestra
         try_resp = qe_list_workflow()

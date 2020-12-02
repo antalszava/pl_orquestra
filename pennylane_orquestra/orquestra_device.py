@@ -116,7 +116,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             str: the backend specifications represented as a string
         """
         if self._backend_specs is None:
-            self._backend_specs = self.create_backend_specs()
+            backend_specs_dict = self.create_backend_specs()
+            self._backend_specs = json.dumps(backend_specs_dict)
+            print(self._backend_specs)
 
         return self._backend_specs
 
@@ -124,7 +126,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         """Create the backend specifications based on the device options.
 
         Returns:
-            str: the backend specifications represented as a string
+            dict: the backend specifications represented as a dictionary
         """
         backend_specs = {}
         backend_specs["module_name"] = self.qe_module_name
@@ -138,7 +140,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         if not self.analytic:
             backend_specs["n_samples"] = self.shots
 
-        return json.dumps(backend_specs)
+        return backend_specs
 
     def execute(self, circuit, **kwargs):
 
@@ -149,8 +151,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         self.check_validity(circuit.operations, circuit.observables)
 
-        # 1. Create the backend specs based on Device options and run_kwargs
-        backend_specs = self.create_backend_specs()
+        # 1. Create the backend specs based on Device options
+        backend_specs = self.backend_specs
 
         # 2. Create qasm strings from the circuits
         try:
