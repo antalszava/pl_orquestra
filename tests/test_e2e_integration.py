@@ -139,8 +139,7 @@ def token():
     if t is None:
         pytest.skip("Skipping test, no IBMQ token available")
 
-    yield t
-    IBMQ.disable_account()
+    return t
 
 class TestOrquestraIBMQIntegration:
     def test_apply_x(self, token):
