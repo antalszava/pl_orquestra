@@ -108,6 +108,27 @@ class TestOrquestraIntegration:
 
         assert circuit() == -1
 
+    def test_compute_expval_including_identity(self):
+        """Test a simple circuit that involves computing the expectation value of the
+        Identity operator."""
+        dev = qml.device('orquestra.qiskit', wires=3)
+
+        # Skip if has not been authenticated with Orquestra
+        try_resp = qe_list_workflow()
+        need_login_msg = 'token has expired, please log in again\n'
+
+        if need_login_msg in try_resp:
+            pytest.skip("Has not logged in to the Orquestra platform.")
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(0)
+            qml.PauliX(1)
+            qml.PauliX(2)
+            return qml.expval(qml.Identity(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.Identity(2))
+
+        assert np.allclose(circuit(), np.array([1, -1, 1]))
+
 
 @pytest.fixture
 def token():

@@ -10,7 +10,7 @@ import numpy as np
 
 from pennylane import QubitDevice, DeviceError
 from pennylane.operation import Sample, Variance, Expectation, Probability, State, Tensor
-from pennylane.ops import QubitStateVector, BasisState, QubitUnitary, CRZ, PhaseShift
+from pennylane.ops import QubitStateVector, BasisState, QubitUnitary, CRZ, PhaseShift, Identity
 from pennylane.wires import Wires
 from pennylane.utils import decompose_hamiltonian
 
@@ -28,7 +28,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             generated during the circuit execution should be kept or deleted.
             These files are placed into a user specific data folder specified
             by the output of ``appdirs.user_data_dir("pennylane-orquestra",
-            "Xanadu")``.
+            "Xanadu")``. Computing the expectation value of the identity
+            observable does not involve a workflow submission (hence no files
+            are created).
         timeout=300 (int): seconds to wait until raising a TimeoutError
     """
 
@@ -131,7 +133,12 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             qasm_circuit = self.serialize_circuit(circuit.graph)
 
         # 3. Create the qubit operators
-        ops = [self.serialize_operator(obs) for obs in circuit.observables]
+        ops, identity_indices = self.process_observables(circuit.observables)
+
+        if not ops:
+            # All the observables were identity, no workflow submission needed
+            return self._asarray([1] * len(identity_indices))
+
         ops_json = json.dumps(ops)
 
         # Single step: need to nest the operators into a list
@@ -159,6 +166,11 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Obtain the value for each operator
         results = [res_dict['list'] for res_dict in list_of_result_dicts]
 
+        # Insert the theoretical value for the expectation value of the
+        # identity operator
+        for idx in identity_indices:
+            results.insert(idx, 1)
+
         res = self._asarray(results)
 
         return res
@@ -185,12 +197,12 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         return results
 
-    def _batch_execute(self, circuits, idx, **kwargs):
+    def _batch_execute(self, circuits, batch_idx, **kwargs):
         """Creates a multi-step workflow for executing a batch of circuits.
 
         Args:
             circuits (list[QuantumTape]): circuits to execute on the device
-            idx (int): the index of the batch used to name the workflow
+            batch_idx (int): the index of the batch used to name the workflow
 
         Returns:
             list[array[float]]: list of measured value(s) for the batch
@@ -214,7 +226,29 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         qasm_circuits = [self.serialize_circuit(circuit) for circuit in circuits]
 
         # 3. Create the qubit operators of observables for each circuit
-        ops = [[self.serialize_operator(obs) for obs in circuit.observables] for circuit in circuits]
+        ops = []
+        identity_indices = {}
+        empty_ops_list = []
+
+        for idx, circuit in enumerate(circuits):
+            this_ops, this_indices = self.process_observables(circuit.observables)
+            ops.append(this_ops)
+            if not ops:
+                # Keep track of empty operation lists
+                empty_ops_list.append(idx)
+
+            identity_indices[idx] = this_indices
+
+        if not all(ops):
+            # There were batches which had only identity observables
+
+            if not any(ops):
+                # All the batches only had identity observables, no workflow submission needed
+                return [self._asarray([1] * len(circuit.observables)) for circuit in circuits]
+
+            # Remove the empty lists so that those are not submitted
+            ops = [o for o in ops if o]
+            print(ops)
 
         # Multiple steps: need to create json strings as elements of the list
         ops = [json.dumps(o) for o in ops]
@@ -224,7 +258,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             self.qe_component,
             self._backend_specs, qasm_circuits, ops, **kwargs
         )
-        filename = f'expval-{str(idx)}.yaml'
+        filename = f'expval-{str(batch_idx)}.yaml'
+        print(filename)
         filepath = write_workflow_file(filename, workflow)
 
         # 5. Submit the workflow
@@ -236,7 +271,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # Due to parallel execution, results might have been written in any order
         # Sort the results by the step name
-        data = {k: v for k, v in sorted(data.items(), key=lambda item: item[1]['expval']['stepName'])}
+        get_step_name = lambda entry: entry[1]['expval']['stepName']
+        data = {k: v for k, v in sorted(data.items(), key=get_step_name)}
 
         # There are multiple steps
         result_dicts = [v for k,v in data.items()]
@@ -246,7 +282,38 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         results = []
         for res_step in list_of_result_dicts:
             extracted_results = [res_dict['list'] for res_dict in res_step]
-            results.append(self._asarray(extracted_results))
+            results.append(extracted_results)
+
+        results = self.insert_identity_res_batch(results, empty_ops_list, identity_indices)
+        results = [self._asarray(res) for res in results]
+
+        return results
+
+    def insert_identity_res_batch(self, results, empty_ops_list, identity_indices):
+        """An auxiliary function for inserting values which were not computed
+        using workflows into batch results.
+
+        Computations involving the identity observable are given by theoretical
+        values rather than as part of a workflow. Therefore, such values need
+        to be inserted into the results later.
+
+        Args:
+            results (list): workflow results of the batched execution
+            empty_ops_list (list): list of indices where every operation was identity
+            identity_indices (dict): maps the index of a sublist to the
+                the list of indices where the observable was an identity
+
+        Returns:
+            list: list of results
+        """
+        # Insert the lists needed for only identity results
+        for idx in empty_ops_list:
+            results.insert(idx, [])
+
+        # Insert further identity results
+        for list_idx in identity_indices.keys():
+            for iden_idx in identity_indices[list_idx]:
+                results[list_idx].insert(iden_idx, 1)
 
         return results
 
@@ -278,6 +345,35 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         qasm_without_measurements = re.sub("measure.*?;\n", "", qasm_str)
         return qasm_without_measurements
+
+    def process_observables(self, observables):
+        """Processes the observables provided with the circuits.
+
+        If the observable defined is the identity, then no serialization
+        happens. Instead, the index of the observable is saved.
+        
+        Args:
+            observables (list): a list of observables to process
+        
+        Returns:
+            tuple:
+                
+                * the serialized non-identity operators
+                * the indices of the identity operators
+        """
+        ops = []
+        identity_indices = []
+        for idx, obs in enumerate(observables):
+            if not isinstance(obs, Identity):
+                # Only serialize if it's not the identity
+                ops.append(self.serialize_operator(obs))
+            else:
+                # Otherwise keep track of the indices and use the theoreticaly
+                # value as a result later
+                identity_indices.append(idx)
+
+        return ops, identity_indices
+
 
     def serialize_operator(self, observable):
         """

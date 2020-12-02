@@ -17,10 +17,12 @@ exact_devices = [
         ]
 
 sampling_devices = [
-     '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 1000}',
-     '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}',
-     '{"module_name": "qequlacs.simulator", "function_name": "QulacsSimulator", "n_samples": 1000}'
+     '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator", "n_samples": 10000}',
+     '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 10000}',
+     '{"module_name": "qequlacs.simulator", "function_name": "QulacsSimulator", "n_samples": 10000}'
         ]
+
+tol = 10e-6
 
 @pytest.mark.parametrize("backend_specs", exact_devices)
 class TestExpvalExact:
@@ -55,7 +57,7 @@ class TestExpvalExact:
         monkeypatch.setattr(expval, "save_list", lambda val, name: lst.append(val))
 
         expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, op)
-        assert math.isclose(lst[0][0], 0.0)
+        assert math.isclose(lst[0][0], 0.0, abs_tol=tol)
 
 @pytest.mark.parametrize("backend_specs", sampling_devices)
 class TestExpvalSampling:
@@ -89,7 +91,7 @@ class TestExpvalSampling:
         monkeypatch.setattr(expval, "save_list", lambda val, name: lst.append(val))
 
         expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, op)
-        assert math.isclose(lst[0][0], 0.0, abs_tol=10e-2)
+        assert math.isclose(lst[0][0], 0.0, abs_tol=tol)
 
 @pytest.fixture
 def token():
@@ -119,4 +121,4 @@ class TestIBMQ:
         monkeypatch.setattr(expval, "save_list", lambda val, name: lst.append(val))
 
         expval.run_circuit_and_get_expval(backend_specs, simple_qasm, op)
-        assert math.isclose(lst[0][0], 1.0, abs_tol=10e-2)
+        assert math.isclose(lst[0][0], 1.0, abs_tol=tol)

@@ -104,6 +104,30 @@ class TestBaseDevice:
             end =  time.time()
             assert end-start >= timeout
 
+    @pytest.mark.parametrize("dev", ['orquestra.forest', 'orquestra.qiskit', 'orquestra.qulacs'])
+    def test_identity_single(self, dev):
+        """Test computing the expectation value of the identity for a single return value."""
+        dev = qml.device(dev, wires=1)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(0)
+            return qml.expval(qml.Identity(0))
+
+        assert circuit() == 1
+
+    @pytest.mark.parametrize("dev", ['orquestra.forest', 'orquestra.qiskit', 'orquestra.qulacs'])
+    def test_identity_multiple(self, dev):
+        """Test computing the expectation value of the identity for multiple return values."""
+        dev = qml.device(dev, wires=2)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(0)
+            return qml.expval(qml.Identity(0)), qml.expval(qml.Identity(1))
+
+        assert np.allclose(circuit(), np.ones(2))
+
 class TestCreateBackendSpecs:
     """Test the create_backend_specs function"""
 
@@ -375,3 +399,60 @@ class TestBatchExecute:
         files_kept = file0_kept and file1_kept and file2_kept
         assert files_kept and file0_kept if keep else not files_kept
         qml.disable_tape()
+
+    @pytest.mark.parametrize("dev", ['orquestra.forest', 'orquestra.qiskit', 'orquestra.qulacs'])
+    def test_identity_single(self, dev):
+        """Test computing the expectation value of the identity for a single return value."""
+        dev = qml.device(dev, wires=1)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(0)
+            return qml.expval(qml.Identity(0))
+
+        assert circuit() == 1
+
+    @pytest.mark.parametrize("dev", ['orquestra.forest', 'orquestra.qiskit', 'orquestra.qulacs'])
+    def test_identity_multiple(self, dev, tmpdir, monkeypatch):
+        """Test computing the expectation value of the identity for multiple
+        return values."""
+        qml.enable_tape()
+
+        dev = qml.device(dev, wires=2, keep_workflow_files=True)
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.RX(0.133, wires=0)
+            qml.expval(qml.Identity(wires=[0]))
+
+        with qml.tape.QuantumTape() as tape2:
+            qml.RX(0.432, wires=0)
+            qml.expval(qml.Identity(wires=[0]))
+            qml.expval(qml.Identity(wires=[1]))
+
+        circuits = [tape1, tape2]
+
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+
+            # Mocking Popen disables submitting to the Orquestra platform
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(pennylane_orquestra.orquestra_device,
+                    "loop_until_finished", lambda *args, **kwargs:
+                    None)
+
+            res = dev.batch_execute(circuits)
+
+            # No workflow files were created because we only computed with
+            # identities
+            assert not os.path.exists(tmpdir.join("expval-0.yaml"))
+            assert not os.path.exists(tmpdir.join("expval-1.yaml"))
+
+            expected = [
+                    np.ones(1),
+                    np.ones(2),
+                    ]
+
+            for r, e in zip(res, expected):
+                assert np.allclose(r, e)
+
+            qml.disable_tape()
