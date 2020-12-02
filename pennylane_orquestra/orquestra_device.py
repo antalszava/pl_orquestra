@@ -21,9 +21,30 @@ from .cli_actions import qe_submit, loop_until_finished, write_workflow_file
 
 
 class OrquestraDevice(QubitDevice, abc.ABC):
-    """Orquestra device
+    """The Orquestra base device.
+
+    Provides the ``~.execute`` and ``~.batch_execute`` methods which allows
+    remote device executions by generating, submitting Orquestra workflows and
+    processing their results.
+
+    The ``~.batch_execute`` method can be utilized to send workflows that
+    contain several circuits which are computed in parallel on a remote device.
+
+    Args:
+        wires (int, Iterable[Number, str]]): Number of subsystems represented by the device,
+            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+            or strings (``['ancilla', 'q1', 'q2']``). Default 1 if not specified.
+        shots (int): number of circuit evaluations/random samples used to estimate
+            expectation values of observables
+        analytic (bool): If ``True``, the device calculates probability, expectation values,
+            and variances analytically. If ``False``, a finite number of samples set by
+            the argument ``shots`` are used to estimate these quantities.
 
     Keyword Args:
+        backend_device=None (str): the Orquestra backend device to use for the
+            specific Orquestra backend, if applicable
+        batch_size=10 (int): the size of each circuit batch when using the
+            ``~.batch_execute`` method to send multiple workflows
         keep_workflow_files=False (bool): Whether or not the workflow files
             generated during the circuit execution should be kept or deleted.
             These files are placed into a user specific data folder specified
@@ -78,12 +99,11 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # TODO: allow noise_model and device_connectivity options
 
         self.backend_device = kwargs.get('backend_device', None)
+        self._batch_size = kwargs.get("batch_size", 10)
         self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
         self._timeout = kwargs.get("timeout", 300)
-        self._batch_size = kwargs.get("batch_size", 10)
         self._latest_id = None
         self._backend_specs = None
-        # self._pre_rotated_state = self._state
 
     def apply(self, operations, **kwargs):
         pass
