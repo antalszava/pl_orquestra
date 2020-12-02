@@ -149,8 +149,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         self.check_validity(circuit.operations, circuit.observables)
 
-        self._circuit_hash = circuit.hash
-
         # 1. Create the backend specs based on Device options and run_kwargs
         backend_specs = self.create_backend_specs()
 
@@ -242,9 +240,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
                 raise NotImplementedError(f"The {self.short_name} device only supports returning expectation values.")
 
             self.check_validity(circuit.operations, circuit.observables)
-
-            # TODO: process hashes as a batch
-            self._circuit_hash = circuit.hash
 
         # 2. Create qasm strings from the circuits
         # Extract the CircuitGraph object from QuantumTape
