@@ -60,7 +60,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     pennylane_requires = ">=0.11.0"
     version = __version__
     author = "Antal Szava"
-    _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
 
     operations = {
         "BasisState",
@@ -107,6 +106,17 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
     def apply(self, operations, **kwargs):
         pass
+
+    @classmethod
+    def capabilities(cls):
+        capabilities = super().capabilities().copy()
+        capabilities.update(
+            model="qubit",
+            supports_inverse_operations=True,
+            supports_analytic_computation=True,
+            returns_probs=False,
+        )
+        return capabilities
 
     @property
     def backend_specs(self):
