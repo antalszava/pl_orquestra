@@ -118,7 +118,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         if self._backend_specs is None:
             backend_specs_dict = self.create_backend_specs()
             self._backend_specs = json.dumps(backend_specs_dict)
-            print(self._backend_specs)
 
         return self._backend_specs
 
