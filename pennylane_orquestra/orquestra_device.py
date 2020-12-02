@@ -88,14 +88,24 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     def apply(self, operations, **kwargs):
         pass
 
-    def create_backend_specs(self, **run_kwargs):
+    @property
+    def backend_specs(self):
+        """The backend specifications defined for the device.
+        
+        Returns:
+            str: the backend specifications represented as a string
+        """
+        if self._backend_specs is None:
+            self._backend_specs = self.create_backend_specs()
+
+        return self._backend_specs
+
+    def create_backend_specs(self):
         """Create the backend specifications based on the device options.
 
         Returns:
             str: the backend specifications represented as a string
         """
-        # TODO: what can be run_kwargs? (any?)
-        # TODO: do we want to cache this?
         backend_specs = {}
         backend_specs["module_name"] = self.qe_module_name
         backend_specs["function_name"] = self.qe_function_name
@@ -122,7 +132,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self._circuit_hash = circuit.hash
 
         # 1. Create the backend specs based on Device options and run_kwargs
-        backend_specs = self.create_backend_specs(**kwargs)
+        backend_specs = self.create_backend_specs()
 
         # 2. Create qasm strings from the circuits
         try:
@@ -175,11 +185,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         return res
 
     def batch_execute(self, circuits, **kwargs):
-        # TODO: do we pass the batch_size here or to the device?
-
-
         # 1. Create the backend specs based on Device options and run_kwargs
-        self._backend_specs = self.create_backend_specs(**kwargs)
+        self._backend_specs = self.create_backend_specs()
 
         idx = 0
 
@@ -247,7 +254,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
             # Remove the empty lists so that those are not submitted
             ops = [o for o in ops if o]
-            print(ops)
 
         # Multiple steps: need to create json strings as elements of the list
         ops = [json.dumps(o) for o in ops]
@@ -258,7 +264,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             self._backend_specs, qasm_circuits, ops, **kwargs
         )
         filename = f'expval-{str(batch_idx)}.yaml'
-        print(filename)
         filepath = write_workflow_file(filename, workflow)
 
         # 5. Submit the workflow
