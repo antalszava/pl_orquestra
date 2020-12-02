@@ -160,17 +160,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         self.check_validity(circuit.operations, circuit.observables)
 
-        # 1. Create the backend specs based on Device options
-        backend_specs = self.backend_specs
-
-        # 2. Create qasm strings from the circuits
+        # 1. Create qasm strings from the circuits
         try:
             qasm_circuit = self.serialize_circuit(circuit)
         except AttributeError:
             # QuantumTape case: need to extract the CircuitGraph
             qasm_circuit = self.serialize_circuit(circuit.graph)
 
-        # 3. Create the qubit operators
+        # 2. Create the qubit operators
         ops, identity_indices = self.process_observables(circuit.observables)
 
         if not ops:
@@ -183,19 +180,19 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         ops = [ops_json]
         qasm_circuit = [qasm_circuit]
 
-        # 4. Create the workflow file
+        # 4-5. Create the backend specs & workflow file
         workflow = expval_template(
             self.qe_component,
-            backend_specs, qasm_circuit, ops, **kwargs
+            self.backend_specs, qasm_circuit, ops, **kwargs
         )
         filename = 'expval.yaml'
         filepath = write_workflow_file(filename, workflow)
 
-        # 5. Submit the workflow
+        # 6. Submit the workflow
         workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
         self._latest_id = workflow_id
 
-        # 6. Loop until finished
+        # 7. Loop until finished
         data = loop_until_finished(workflow_id, timeout=self._timeout)
 
         # Assume that there's only one step
@@ -215,8 +212,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
     def batch_execute(self, circuits, **kwargs):
         # 1. Create the backend specs based on Device options and run_kwargs
-        self._backend_specs = self.create_backend_specs()
-
         idx = 0
 
         results = []
@@ -252,12 +247,12 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
             self.check_validity(circuit.operations, circuit.observables)
 
-        # 2. Create qasm strings from the circuits
+        # 1. Create qasm strings from the circuits
         # Extract the CircuitGraph object from QuantumTape
         circuits = [circ.graph for circ in circuits]
         qasm_circuits = [self.serialize_circuit(circuit) for circuit in circuits]
 
-        # 3. Create the qubit operators of observables for each circuit
+        # 2. Create the qubit operators of observables for each circuit
         ops = []
         identity_indices = {}
         empty_ops_list = []
@@ -284,10 +279,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Multiple steps: need to create json strings as elements of the list
         ops = [json.dumps(o) for o in ops]
 
-        # 4. Create the workflow file
+        # 3-4. Create the backend specs & workflow file
         workflow = expval_template(
             self.qe_component,
-            self._backend_specs, qasm_circuits, ops, **kwargs
+            self.backend_specs, qasm_circuits, ops, **kwargs
         )
         filename = f'expval-{str(batch_idx)}.yaml'
         filepath = write_workflow_file(filename, workflow)

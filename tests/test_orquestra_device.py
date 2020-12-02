@@ -144,16 +144,15 @@ class TestBaseDevice:
 class TestCreateBackendSpecs:
     """Test the create_backend_specs function"""
 
-    @pytest.mark.parametrize("backend", [QeQiskitDevice])
-    def test_backend_specs_analytic(self, backend):
+    def test_backend_specs_analytic(self):
         """Test that the backend specs are created well for an analytic device"""
-        dev = backend(wires=1, shots=1000, backend_device='statevector_simulator', analytic=True)
+        dev = qml.device("orquestra.qiskit", backend_device="statevector_simulator", wires=1, analytic=True)
         assert dev.backend_specs == qiskit_analytic_specs
 
     @pytest.mark.parametrize("backend", [QeQiskitDevice])
     def test_backend_specs_sampling(self, backend):
         """Test that the backend specs are created well for a sampling device"""
-        dev = backend(wires=1, shots=1000, analytic=False)
+        dev = qml.device("orquestra.qiskit", backend_device="statevector_simulator", wires=1,  shots=1000, analytic=False)
         assert dev.backend_specs == qiskit_sampler_specs
 
 class TestSerializeCircuit:
@@ -316,8 +315,8 @@ class TestBatchExecute:
         qml.enable_tape()
 
         with qml.tape.QuantumTape() as tape1:
-            qml.RX(0.133, wires='a')
-            qml.CNOT(wires=[0, 'a'])
+            qml.RX(0.133, wires=1)
+            qml.CNOT(wires=[0, 1])
             qml.expval(qml.PauliZ(wires=[0]))
 
         with qml.tape.QuantumTape() as tape2:
@@ -364,8 +363,8 @@ class TestBatchExecute:
         qml.enable_tape()
 
         with qml.tape.QuantumTape() as tape1:
-            qml.RX(0.133, wires='a')
-            qml.CNOT(wires=[0, 'a'])
+            qml.RX(0.133, wires=0)
+            qml.CNOT(wires=[0, 1])
             qml.expval(qml.PauliZ(wires=[0]))
 
         with qml.tape.QuantumTape() as tape2:

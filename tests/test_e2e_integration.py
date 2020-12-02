@@ -131,6 +131,40 @@ class TestOrquestraIntegration:
 
         assert np.allclose(circuit(), np.array([1, -1, 1]))
 
+    def test_jacobian_with_batch_execute(self):
+        """Test that the value of the jacobian computed using the internal
+        batch_execute method corresponds to the value computed with
+        the default.qubit device.
+        
+        There are ``qubits * layers * 3 * 2`` many circuits to evaluate.
+        """
+        qml.enable_tape()
+
+        # Evaluate 12 circuits (2 * 1 * 3 * 2)
+        # By default, this fits into two separate workflow files
+        qubits = 2
+        layers = 1
+        weights = qml.init.strong_ent_layers_uniform(layers, qubits)
+
+        dev1 = qml.device("orquestra.qiskit", backend_device="statevector_simulator", wires=qubits, analytic=True, keep_workflow_files=True)
+        dev2 = qml.device("default.qubit", wires=qubits, analytic=True)
+
+        def func(weights):
+            qml.templates.StronglyEntanglingLayers(weights, wires=range(qubits))
+            return qml.expval(qml.PauliZ(0))
+
+        orquestra_qnode = qml.QNode(func, dev1)
+        default_qnode = qml.QNode(func, dev2)
+
+        dfunc1 = qml.grad(orquestra_qnode)
+        dfunc2 = qml.grad(default_qnode)
+
+        res_orquestra = dfunc1(weights)
+        res_default_qubit = dfunc2(weights)
+
+        assert np.allclose(res_orquestra, res_default_qubit)
+        qml.disable_tape()
+
 
 @pytest.fixture
 def token():
