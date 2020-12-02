@@ -27,14 +27,13 @@ class TestExpvalExact:
     """Tests getting the expecation value of circuits on devices that support
     exact computations."""
 
-    @pytest.mark.parametrize("op", ['["[Z0]"]', '["[Z1]"]', '["[Z2]"]'])
+    @pytest.mark.parametrize("op", ['["[Z0]"]', '["[Z1]"]', '["[Z2]"]', '["[]"]'])
     def test_only_measure_circuit(self, op, backend_specs, monkeypatch, tmpdir):
         """Tests that the correct result in obtained for a circuit that only
         contains measurements."""
         local_list = []
 
-        only_measure_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\n'
-        op = '["[Z0]"]'
+        only_measure_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3];\ncreg c[3];\n'
 
         lst = []
 
@@ -62,7 +61,7 @@ class TestExpvalExact:
 class TestExpvalSampling:
     """Tests getting the expecation value of circuits on sampling devices."""
 
-    @pytest.mark.parametrize("op", ['["[Z0]"]', '["[Z1]"]', '["[Z2]"]'])
+    @pytest.mark.parametrize("op", ['["[Z0]"]', '["[Z1]"]', '["[Z2]"]', '["[]"]'])
     def test_only_measure_circuit(self, backend_specs, op, monkeypatch):
         """Tests that the correct result in obtained for a circuit that only
         contains measurements."""
