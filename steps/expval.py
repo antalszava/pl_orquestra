@@ -53,7 +53,7 @@ def run_circuit_and_get_expval(
 
     # 1. Parse circuit
     qc = QuantumCircuit.from_qasm_str(circuit)
-    circuit = Circuit(qc)
+
 
     if not isinstance(operators, Sequence):
         operators = [target_operator]
@@ -67,6 +67,33 @@ def run_circuit_and_get_expval(
         else:
             # Operator for Simulator exact mode
             ops.append(QubitOperator(op))
+
+
+    # 2.+1
+    # Activate the qubits that are measured but were not acted on
+    # By applying the identity
+    # Note: this is a temporary logic subject to be removed once supported by
+    # Orquestra
+
+    # Get the active qubits of the circuit
+    active_qubits = []
+    for instr in qc.data:
+        instruction_qubits = [qubit.index for qubit in instr[1]]
+        active_qubits.extend(instruction_qubits)
+
+    active_qubits = set(active_qubits)
+
+    # Get the qubits we'd like to measure
+    op_qubits = [term[0][0] for op in ops for term in op.terms]
+
+    need_to_activate = set(op_qubits) - active_qubits
+    if not need_to_activate == set():
+        for qubit in need_to_activate:
+            # Apply the identity
+            qc.id(qubit)
+
+    # Convert to zquantum.core.circuit.Circuit
+    circuit = Circuit(qc)
 
     # 3. Expval
     results = []
