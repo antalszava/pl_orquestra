@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
+import math
 import yaml
+import os
 
 import pennylane as qml
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
@@ -105,3 +107,33 @@ class TestOrquestraIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert circuit() == -1
+
+
+@pytest.fixture
+def token():
+    t = os.getenv("IBMQX_TOKEN_TEST", None)
+
+    if t is None:
+        pytest.skip("Skipping test, no IBMQ token available")
+
+    yield t
+    IBMQ.disable_account()
+
+class TestOrquestraIBMQIntegration:
+    def test_apply_x(self, token):
+        """Test a simple circuit that applies PauliX on the first wire."""
+        dev = qml.device('orquestra.ibmq', wires=3, token=token)
+
+        # Skip if has not been authenticated with Orquestra
+        try_resp = qe_list_workflow()
+        need_login_msg = 'token has expired, please log in again\n'
+
+        if need_login_msg in try_resp:
+            pytest.skip("Has not logged in to the Orquestra platform.")
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert math.isclose(circuit(), -1, abs_tol=10e-5)

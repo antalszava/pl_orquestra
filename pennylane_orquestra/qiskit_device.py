@@ -15,7 +15,7 @@ from . import __version__
 
 
 class QeQiskitDevice(OrquestraDevice):
-    """Orquestra device"""
+    """The Orquestra Qiskit device."""
     short_name = "orquestra.qiskit"
 
     qe_component = "qe-qiskit"

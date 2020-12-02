@@ -55,7 +55,7 @@ class TestExpvalExact:
         monkeypatch.setattr(expval, "save_list", lambda val, name: lst.append(val))
 
         expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, op)
-        assert np.isclose(lst[0][0], 0.0)
+        assert math.isclose(lst[0][0], 0.0)
 
 @pytest.mark.parametrize("backend_specs", sampling_devices)
 class TestExpvalSampling:

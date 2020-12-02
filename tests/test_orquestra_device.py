@@ -76,7 +76,7 @@ class TestBaseDevice:
             file_kept = os.path.exists(tmpdir.join("expval.yaml"))
             assert file_kept if keep else not file_kept
 
-    @pytest.mark.parametrize("timeout", [1,4])
+    @pytest.mark.parametrize("timeout", [1,2.5])
     def test_timeout(self, timeout, tmpdir, monkeypatch):
         """Test the option for keeping/deleting the workflow file."""
 
@@ -139,11 +139,10 @@ class TestSerializeCircuit:
         expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\nry(-0.7853981633974483) q[0];\n'
         assert qasm == expected
 
-    @pytest.mark.parametrize("backend", [QeQiskitDevice])
-    def test_serialize_circuit_no_rotations(self, backend):
+    def test_serialize_circuit_no_rotations(self):
         """Test that a circuit that is serialized correctly without rotations for
         a simulator backend"""
-        dev = backend(wires=1, shots=1000, analytic=False)
+        dev = QeQiskitDevice(wires=1, shots=1000, backend_device="statevector_simulator", analytic=True)
 
         def circuit():
             qml.Hadamard(wires=[0])
@@ -232,7 +231,7 @@ class TestSerializeOperator:
     def test_serialize_operator_no_rot(self, obs, expected):
         """Test that a device that does not need to include rotations
         serializes the operators with consecutive integer wires correctly."""
-        dev = QeQiskitDevice(wires=3, shots=1000, analytic=False)
+        dev = QeQiskitDevice(wires=3, backend_device='statevector_simulator', analytic=True)
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
 
@@ -240,7 +239,7 @@ class TestSerializeOperator:
     def test_serialize_operator_no_rot_custom_labels(self, obs, expected):
         """Test that a device that does not need to include rotations
         serializes the operators with custom labels correctly."""
-        dev = QeQiskitDevice(wires=['a','b','c'], shots=1000, analytic=False)
+        dev = QeQiskitDevice(wires=['a','b','c'], backend_device='statevector_simulator', analytic=True)
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
 

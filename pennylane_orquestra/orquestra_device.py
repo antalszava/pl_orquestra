@@ -259,20 +259,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         """
         return self._latest_id
 
-    @property
-    def needs_rotations(self):
-        """Determines whether the specified backend is a remote hardware device.
-
-        When using a remote hardware backend the following are applicable:
-        1. circuits need to include rotations (for observables other than PauliZ)
-        2. the ``IsingOperator`` representation of OpenFermion needs to be used
-        to serialize an ``Observable``
-
-        Returns:
-            bool: whether or not the backend specified needs rotations
-        """
-        return "backend" in self.qe_module_name
-
     def serialize_circuit(self, circuit):
         """Serializes the circuit before submission according to the backend
         specified.
@@ -288,7 +274,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             str: OpenQASM 2.0 representation of the circuit without any
             measurement instructions
         """
-        qasm_str = circuit.to_openqasm(rotations=self.needs_rotations)
+        qasm_str = circuit.to_openqasm(rotations=not self.analytic)
 
         qasm_without_measurements = re.sub("measure.*?;\n", "", qasm_str)
         return qasm_without_measurements
@@ -305,7 +291,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         Returns:
             str: string representation of terms making up the observable
         """
-        if self.needs_rotations:
+        if not self.analytic:
             obs_wires = observable.wires
             wires = self.wires.indices(obs_wires)
             op_str = self.pauliz_operator_string(wires)
