@@ -74,7 +74,7 @@ class TestBaseDevice:
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
-            # Mocking Popen disables submitting to the Orquestra platform
+            # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
@@ -103,7 +103,7 @@ class TestBaseDevice:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
             m.setattr(pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: "Test res")
 
-            # Mocking Popen disables submitting to the Orquestra platform
+            # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
 
             @qml.qnode(dev)
@@ -175,7 +175,7 @@ class TestBaseDevice:
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
-            # Mocking Popen disables submitting to the Orquestra platform
+            # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
@@ -346,7 +346,7 @@ class TestSerializeOperator:
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
-            # Mocking Popen disables submitting to the Orquestra platform
+            # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
@@ -367,8 +367,9 @@ class TestBatchExecute:
         """Test that the batch_execute method returns the desired result and
         that the result preserves the order in which circuits were
         submitted."""
-
         qml.enable_tape()
+
+        dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
 
         with qml.tape.QuantumTape() as tape1:
             qml.RX(0.133, wires=1)
@@ -386,14 +387,12 @@ class TestBatchExecute:
 
         circuits = [tape1, tape2, tape3]
 
-        dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
-
         assert not os.path.exists(tmpdir.join("expval.yaml"))
 
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
-            # Mocking Popen disables submitting to the Orquestra platform
+            # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
@@ -401,7 +400,7 @@ class TestBatchExecute:
 
             res = dev.batch_execute(circuits)
 
-            # We expect that the results are in the correct order
+            # Correct order of results is expected
             assert np.allclose(res[0], test_batch_res0)
             assert np.allclose(res[1], test_batch_res1)
             assert np.allclose(res[2], test_batch_res2)
@@ -411,7 +410,8 @@ class TestBatchExecute:
         qml.disable_tape()
 
     @pytest.mark.parametrize("keep", [True, False])
-    def test_batch_exec_multiple_workflow(self, keep, tmpdir, monkeypatch):
+    @pytest.mark.parametrize("dev_name", ['orquestra.forest', 'orquestra.qiskit', 'orquestra.qulacs'])
+    def test_batch_exec_multiple_workflow(self, keep, dev_name, tmpdir, monkeypatch):
         """Test that the batch_execute method returns the desired result and
         that the result preserves the order in which circuits were submitted
         when batches are created in multiple workflows ."""
@@ -434,8 +434,8 @@ class TestBatchExecute:
 
         circuits = [tape1, tape2, tape3]
 
-        # Only allow a single circuit for each workflow
-        dev = qml.device('orquestra.forest', wires=3, batch_size=1, keep_workflow_files=keep)
+        # Setting batch size: allow only a single circuit for each workflow
+        dev = qml.device(dev_name, wires=3, batch_size=1, keep_workflow_files=keep)
 
         # Check that no workflow files were created before
         assert not os.path.exists(tmpdir.join("expval-0.yaml"))
@@ -445,7 +445,7 @@ class TestBatchExecute:
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
-            # Mocking Popen disables submitting to the Orquestra platform
+            # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
@@ -453,7 +453,7 @@ class TestBatchExecute:
 
             res = dev.batch_execute(circuits)
 
-            # We expect that the results are in the correct order
+            # Correct order of results is expected
             assert np.allclose(res[0], test_batch_res0)
             assert np.allclose(res[1], test_batch_res1)
             assert np.allclose(res[2], test_batch_res2)
