@@ -131,6 +131,8 @@ test_batch_res0 = 0.777506938122745
 test_batch_res1 = 13.321
 test_batch_res2 = 1.234 
 
+# Test workflow with multiple steps
+
 # A result dictionary for 3 steps as a result of batched execution
 # The step names are not sorted ("class" entry in each nested dictionary): the
 # order of results differs from the way they were assumed to be submitted
