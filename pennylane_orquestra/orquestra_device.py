@@ -71,7 +71,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         "CSWAP",
         "CY",
         "CZ",
-        "DiagonalQubitUnitary",
         "Hadamard",
         "MultiRZ",
         "PauliX",
@@ -112,7 +111,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         capabilities = super().capabilities().copy()
         capabilities.update(
             model="qubit",
-            supports_inverse_operations=True,
+            supports_inverse_operations=False,
             supports_analytic_computation=True,
             returns_probs=False,
         )
