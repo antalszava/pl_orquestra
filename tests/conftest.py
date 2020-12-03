@@ -131,12 +131,15 @@ test_batch_res0 = 0.777506938122745
 test_batch_res1 = 13.321
 test_batch_res2 = 1.234 
 
-# Test workflow with multiple steps
+step_name0 = "run-circuit-and-get-expval-0"
+step_name1 = "run-circuit-and-get-expval-1"
+step_name2 = "run-circuit-and-get-expval-2"
 
-# A result dictionary for 3 steps as a result of batched execution
-# The step names are not sorted ("class" entry in each nested dictionary): the
+# Test workflow result for 3 steps
+
+# The step names are not in order ("class" entry in each nested dictionary): the
 # order of results differs from the way they were assumed to be submitted
-test_batch_dict = {
+test_batch_result = {
     "expval-id2312": {
         "class": "run-circuit-and-get-expval-2",
         "expval": {
@@ -153,7 +156,7 @@ test_batch_dict = {
             ],
             "schema": "test",
             "stepId": "expval",
-            "stepName": "run-circuit-and-get-expval-2",
+            "stepName": step_name2,
             "taskClass": "run-circuit-and-get-expval-2",
             "taskId": "expval",
             "workflowId": "expval",
@@ -162,7 +165,7 @@ test_batch_dict = {
         "workflowId": "expval",
     },
     "expval-id000": {
-        "class": "run-circuit-and-get-expval-0",
+        "class": step_name0,
         "expval": {
             "id": "expval-id/expval",
             "list": [
@@ -201,7 +204,7 @@ test_batch_dict = {
             ],
             "schema": "test",
             "stepId": "expval",
-            "stepName": "run-circuit-and-get-expval-1",
+            "stepName": step_name1,
             "taskClass": "run-circuit-and-get-expval-1",
             "taskId": "expval",
             "workflowId": "expval",
