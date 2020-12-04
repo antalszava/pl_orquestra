@@ -168,6 +168,7 @@ class TestOrquestraIntegration:
 
 @pytest.fixture
 def token():
+    """Get the IBMQX token from an environment variable."""
     t = os.getenv("IBMQX_TOKEN_TEST", None)
 
     if t is None:
