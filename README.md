@@ -39,7 +39,7 @@ Examples can be run after authentication using the `qe` command-line tool happen
 ```python
 import pennylane as qml
 
-dev = qml.device('orquestra.qulacs', wires=3, analytic=True, keep_workflow_files=True)
+dev = qml.device('orquestra.qulacs', wires=3, analytic=True, keep_files=True)
 
 @qml.qnode(dev)
 def circuit():
@@ -57,7 +57,7 @@ circuit()
 ```python
 import pennylane as qml
 
-dev = qml.device('orquestra.qiskit', wires=3, backend_device='statevector_simulator', analytic=True, keep_workflow_files=True)
+dev = qml.device('orquestra.qiskit', wires=3, backend_device='statevector_simulator', analytic=True, keep_files=True)
 
 @qml.qnode(dev)
 def circuit():

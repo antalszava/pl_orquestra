@@ -68,7 +68,7 @@ class TestBaseDevice:
         """Test the option for keeping/deleting the workflow file."""
 
         file_name = 'test_workflow.yaml'
-        dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
+        dev = qml.device('orquestra.forest', wires=3, keep_files=keep)
         mock_res_dict = {'First': {'expval': {'list': [{'list': 123456789}]}}}
         test_uuid = "1234"
 
@@ -170,7 +170,7 @@ class TestBaseDevice:
         return values."""
         qml.enable_tape()
 
-        dev = qml.device(dev, wires=2, keep_workflow_files=True)
+        dev = qml.device(dev, wires=2, keep_files=True)
 
         with qml.tape.QuantumTape() as tape1:
             qml.RX(0.133, wires=0)
@@ -384,7 +384,7 @@ class TestBatchExecute:
         submitted."""
         qml.enable_tape()
 
-        dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
+        dev = qml.device('orquestra.forest', wires=3, keep_files=keep)
 
         with qml.tape.QuantumTape() as tape1:
             qml.RX(0.133, wires=1)
@@ -455,7 +455,7 @@ class TestBatchExecute:
         circuits = [tape1, tape2, tape3]
 
         # Setting batch size: allow only a single circuit for each workflow
-        dev = qml.device(dev_name, wires=3, batch_size=1, keep_workflow_files=keep)
+        dev = qml.device(dev_name, wires=3, batch_size=1, keep_files=keep)
 
         # Check that no workflow files were created before
         test_uuid = "1234"

@@ -34,7 +34,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     The workflow files generated are placed into a user specific data folder
     specified by the output of ``appdirs.user_data_dir("pennylane-orquestra",
     "Xanadu")``. By default, such files are removed (see
-    ``keep_workflow_files`` keyword argument). After each device execution,
+    ``keep_files`` keyword argument). After each device execution,
     filenames for the generated workflows are stored in the ``filenames``
     attribute.
     
@@ -58,7 +58,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             specific Orquestra backend, if applicable
         batch_size=10 (int): the size of each circuit batch when using the
             ``~.batch_execute`` method to send multiple workflows
-        keep_workflow_files=False (bool): Whether or not the workflow files
+        keep_files=False (bool): Whether or not the workflow files
             generated during the circuit execution should be kept or deleted.
         timeout=300 (int): seconds to wait until raising a TimeoutError
     """
@@ -106,7 +106,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         self.backend_device = kwargs.get('backend_device', None)
         self._batch_size = kwargs.get("batch_size", 10)
-        self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
+        self._keep_files = kwargs.get("keep_files", False)
         self._timeout = kwargs.get("timeout", 300)
         self._latest_id = None
         self._filenames = []
@@ -198,9 +198,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         filepath = write_workflow_file(filename, workflow)
 
         # 6. Submit the workflow
-        workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
+        workflow_id = qe_submit(filepath, keep_file=self._keep_files)
 
-        if self._keep_workflow_files:
+        if self._keep_files:
             self._filenames.append(filename)
 
         self._latest_id = workflow_id
@@ -304,10 +304,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         filepath = write_workflow_file(filename, workflow)
 
         # 5. Submit the workflow
-        workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
+        workflow_id = qe_submit(filepath, keep_file=self._keep_files)
         self._latest_id = workflow_id
 
-        if self._keep_workflow_files:
+        if self._keep_files:
             self._filenames.append(filename)
 
         # 6. Loop until finished
