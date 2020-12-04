@@ -12,10 +12,10 @@ from appdirs import user_data_dir
 import urllib.request, json
 
 
-def qe_get(workflow_id, option='workflow'):
+def qe_get(workflow_id, option="workflow"):
     """Function for getting information via an Orquestra Quantum Engine CLI
     call.
-    
+
     This function is mostly used for retrieving workflow related information.
 
     Args:
@@ -29,14 +29,15 @@ def qe_get(workflow_id, option='workflow'):
     Returns:
         str: response message of the CLI call
     """
-    process = subprocess.Popen(['qe', 'get', option, str(workflow_id)], 
-                               stdout=subprocess.PIPE,
-                               universal_newlines=True)
-    return process.stdout.readlines()  
+    process = subprocess.Popen(
+        ["qe", "get", option, str(workflow_id)], stdout=subprocess.PIPE, universal_newlines=True
+    )
+    return process.stdout.readlines()
+
 
 def qe_submit(filepath, keep_file=False):
     """Function for submitting a workflow via a CLI call.
-    
+
     Handling submission response messages was based on using Orquestra API
     v1.0.0.
 
@@ -53,13 +54,13 @@ def qe_submit(filepath, keep_file=False):
     Raises:
         ValueError: if the submission was not successful
     """
-    process = subprocess.Popen(['qe', 'submit', 'workflow', str(filepath)], 
-                               stdout=subprocess.PIPE,
-                               universal_newlines=True)
+    process = subprocess.Popen(
+        ["qe", "submit", "workflow", str(filepath)], stdout=subprocess.PIPE, universal_newlines=True
+    )
     res = process.stdout.readlines()
 
     details = "".join(res)
-    if 'Success' not in details:
+    if "Success" not in details:
         raise ValueError(res)
 
     if not keep_file:
@@ -73,6 +74,7 @@ def qe_submit(filepath, keep_file=False):
 
     return workflow_id
 
+
 def workflow_details(workflow_id):
     """Function for getting workflow details via a CLI call.
 
@@ -83,7 +85,8 @@ def workflow_details(workflow_id):
     Returns:
         str: response message of the CLI call
     """
-    return qe_get(workflow_id, option='workflow')
+    return qe_get(workflow_id, option="workflow")
+
 
 def get_workflow_results(workflow_id):
     """Function for getting workflow results via a CLI call.
@@ -99,7 +102,8 @@ def get_workflow_results(workflow_id):
     Returns:
         str: response message of the CLI call
     """
-    return qe_get(workflow_id, option='workflowresult')
+    return qe_get(workflow_id, option="workflowresult")
+
 
 def write_workflow_file(filename, workflow):
     """Write a workflow file given the name of the file.
@@ -120,12 +124,13 @@ def write_workflow_file(filename, workflow):
 
     filepath = os.path.join(directory, filename)
 
-    with open(filepath, 'w') as file:
+    with open(filepath, "w") as file:
         # The order of the keys within the YAML file is pre-defined for Orquestra,
         # hence need to keep the order
         d = yaml.dump(workflow, file, sort_keys=False)
 
     return filepath
+
 
 def loop_until_finished(workflow_id, timeout=300):
     """Loops until the workflow execution has finished by querying workflow
@@ -152,11 +157,13 @@ def loop_until_finished(workflow_id, timeout=300):
         tries += 1
 
         # Check if we've exceeded the timeout time, otherwise loop further
-        if time.time()-start > timeout:
+        if time.time() - start > timeout:
             current_status = workflow_details(workflow_id)
-            raise TimeoutError(f'The workflow results for workflow '
-                    f'{workflow_id} were not obtained after {timeout/60} minutes. '
-                    f'{current_status}')
+            raise TimeoutError(
+                f"The workflow results for workflow "
+                f"{workflow_id} were not obtained after {timeout/60} minutes. "
+                f"{current_status}"
+            )
 
         if tries % 20 == 0:
 
@@ -165,7 +172,7 @@ def loop_until_finished(workflow_id, timeout=300):
             status = workflow_details(workflow_id)
             details_string = "".join(status).split()
             if "Failed" in details_string:
-                raise ValueError(f'Something went wrong with executing the workflow. {status}')
+                raise ValueError(f"Something went wrong with executing the workflow. {status}")
 
         results = get_workflow_results(workflow_id)
 

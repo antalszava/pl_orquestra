@@ -15,9 +15,9 @@ from .orquestra_device import OrquestraDevice
 from . import __version__
 
 
-
 class QeIBMQDevice(OrquestraDevice):
     """The Orquestra IBMQ device."""
+
     short_name = "orquestra.ibmq"
 
     qe_component = "qe-qiskit"
@@ -29,12 +29,16 @@ class QeIBMQDevice(OrquestraDevice):
         self._token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)
 
         if self._token is None:
-            raise ValueError("Please pass a valid IBMQX token to the device using the 'ibmqx_token' argument.")
+            raise ValueError(
+                "Please pass a valid IBMQX token to the device using the 'ibmqx_token' argument."
+            )
 
         if "analytic" in kwargs and kwargs["analytic"]:
             # Raise a warning if the analytic attribute was set to True
-            warnings.warn("The {self.short_name} device cannot be used in "
-                    "analytic mode. Results are based on sampling.")
+            warnings.warn(
+                "The {self.short_name} device cannot be used in "
+                "analytic mode. Results are based on sampling."
+            )
 
         kwargs["analytic"] = False
         super().__init__(wires, backend=backend, shots=shots, **kwargs)

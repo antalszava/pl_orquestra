@@ -37,7 +37,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     ``keep_files`` keyword argument). After each device execution,
     filenames for the generated workflows are stored in the ``filenames``
     attribute.
-    
+
     Computing the expectation value of the identity operator does not involve a
     workflow submission (hence no files are created).
 
@@ -105,7 +105,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # TODO: allow noise_model and device_connectivity options
 
-        self.backend = kwargs.get('backend', None)
+        self.backend = kwargs.get("backend", None)
         self._batch_size = kwargs.get("batch_size", 10)
         self._keep_files = kwargs.get("keep_files", False)
         self._resources = kwargs.get("resources", None)
@@ -131,7 +131,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     @property
     def backend_specs(self):
         """The backend specifications defined for the device.
-        
+
         Returns:
             str: the backend specifications represented as a string
         """
@@ -166,7 +166,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Input checks
         not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
         if not_all_expval:
-            raise NotImplementedError(f"The {self.short_name} device only supports returning expectation values.")
+            raise NotImplementedError(
+                f"The {self.short_name} device only supports returning expectation values."
+            )
 
         self.check_validity(circuit.operations, circuit.observables)
 
@@ -193,10 +195,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # 4-5. Create the backend specs & workflow file
         workflow = expval_template(
             self.qe_component,
-            self.backend_specs, qasm_circuit, ops, resources=self._resources, **kwargs
+            self.backend_specs,
+            qasm_circuit,
+            ops,
+            resources=self._resources,
+            **kwargs,
         )
         file_id = str(uuid.uuid4())
-        filename = f'expval-{file_id}.yaml'
+        filename = f"expval-{file_id}.yaml"
         filepath = write_workflow_file(filename, workflow)
 
         # 6. Submit the workflow
@@ -211,10 +217,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         data = loop_until_finished(workflow_id, timeout=self._timeout)
 
         # Assume that there's only one step
-        list_of_result_dicts = [v for k,v in data.items()][0]['expval']['list']
+        list_of_result_dicts = [v for k, v in data.items()][0]["expval"]["list"]
 
         # Obtain the value for each operator
-        results = [res_dict['list'] for res_dict in list_of_result_dicts]
+        results = [res_dict["list"] for res_dict in list_of_result_dicts]
 
         # Insert the theoretical value for the expectation value of the
         # identity operator
@@ -228,14 +234,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     def batch_execute(self, circuits, **kwargs):
         results = []
         idx = 0
-        file_prefix = f'{str(uuid.uuid4())}'
+        file_prefix = f"{str(uuid.uuid4())}"
 
         # Iterating through the circuits based on the allowed number of
         # circuits per workflow
-        while idx < len(circuits): 
+        while idx < len(circuits):
             end_idx = idx + self._batch_size
             batch = circuits[idx:end_idx]
-            file_id = f'{file_prefix}-{str(idx)}'
+            file_id = f"{file_prefix}-{str(idx)}"
 
             res = self._batch_execute(batch, file_id, **kwargs)
 
@@ -260,7 +266,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             # Input checks
             not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
             if not_all_expval:
-                raise NotImplementedError(f"The {self.short_name} device only supports returning expectation values.")
+                raise NotImplementedError(
+                    f"The {self.short_name} device only supports returning expectation values."
+                )
 
             self.check_validity(circuit.operations, circuit.observables)
 
@@ -299,10 +307,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # 3-4. Create the backend specs & workflow file
         workflow = expval_template(
             self.qe_component,
-            self.backend_specs, qasm_circuits, ops, resources=self._resources, **kwargs
+            self.backend_specs,
+            qasm_circuits,
+            ops,
+            resources=self._resources,
+            **kwargs,
         )
 
-        filename = f'expval-{file_id}.yaml'
+        filename = f"expval-{file_id}.yaml"
         filepath = write_workflow_file(filename, workflow)
 
         # 5. Submit the workflow
@@ -317,17 +329,17 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # Due to parallel execution, results might have been written in any order
         # Sort the results by the step name
-        get_step_name = lambda entry: entry[1]['expval']['stepName']
+        get_step_name = lambda entry: entry[1]["expval"]["stepName"]
         data = {k: v for k, v in sorted(data.items(), key=get_step_name)}
 
         # There are multiple steps
-        result_dicts = [v for k,v in data.items()]
-        list_of_result_dicts = [dct['expval']['list'] for dct in result_dicts]
+        result_dicts = [v for k, v in data.items()]
+        list_of_result_dicts = [dct["expval"]["list"] for dct in result_dicts]
 
         # Obtain the results for each step
         results = []
         for res_step in list_of_result_dicts:
-            extracted_results = [res_dict['list'] for res_dict in res_step]
+            extracted_results = [res_dict["list"] for res_dict in res_step]
             results.append(extracted_results)
 
         results = self.insert_identity_res_batch(results, empty_ops_list, identity_indices)
@@ -407,13 +419,13 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         If the observable defined is the identity, then no serialization
         happens. Instead, the index of the observable is saved.
-        
+
         Args:
             observables (list): a list of observables to process
-        
+
         Returns:
             tuple:
-                
+
                 * the serialized non-identity operators
                 * the indices of the identity operators
         """
@@ -429,7 +441,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
                 identity_indices.append(idx)
 
         return ops, identity_indices
-
 
     def serialize_operator(self, observable):
         """
@@ -521,7 +532,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             # This removes information about the wire labels used
             coeffs, obs_list = decompose_hamiltonian(observable.matrix)
 
-            inverted_wire_map = {idx:v for idx, v in enumerate(self.wires)}
+            inverted_wire_map = {idx: v for idx, v in enumerate(self.wires)}
             for idx in range(len(obs_list)):
                 obs = obs_list[idx]
 
@@ -546,5 +557,5 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             obs_list = [observable]
 
         # Use consecutive integers as default wire_map
-        wire_map = {v:idx for idx, v in enumerate(self.wires)}
+        wire_map = {v: idx for idx, v in enumerate(self.wires)}
         return _terms_to_qubit_operator_string(coeffs, obs_list, wires=wire_map)

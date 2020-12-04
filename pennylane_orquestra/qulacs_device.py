@@ -12,9 +12,9 @@ from .orquestra_device import OrquestraDevice
 from . import __version__
 
 
-
 class QeQulacsDevice(OrquestraDevice):
     """Orquestra device"""
+
     short_name = "orquestra.qulacs"
 
     qe_component = "qe-qulacs"

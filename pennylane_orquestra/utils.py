@@ -19,6 +19,7 @@ library.
 """
 from pennylane.wires import Wires
 
+
 def _process_wires(wires, n_wires=None):
     r"""
     Checks and consolidates custom user wire mapping into a consistent, direction-free, `Wires`
@@ -152,7 +153,9 @@ def _terms_to_qubit_operator_string(coeffs, ops, wires=None):
     all_wires = Wires.all_wires([op.wires for op in ops], sort=True)
 
     if wires is not None:
-        qubit_indexed_wires = _process_wires(wires,)
+        qubit_indexed_wires = _process_wires(
+            wires,
+        )
         if not set(all_wires).issubset(set(qubit_indexed_wires)):
             raise ValueError("Supplied `wires` does not cover all wires defined in `ops`.")
     else:
@@ -184,8 +187,8 @@ def _terms_to_qubit_operator_string(coeffs, ops, wires=None):
             )
 
         # This is how one makes a string for a QubitOperator in OpenFermion
-        q_op.append(f'{coeff} [{term_str}]')
-        q_op.append(' + ')
+        q_op.append(f"{coeff} [{term_str}]")
+        q_op.append(" + ")
 
     # Remove the last ' + ' element
     q_op.pop()

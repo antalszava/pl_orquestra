@@ -13,6 +13,7 @@ from .orquestra_device import OrquestraDevice
 
 class QeForestDevice(OrquestraDevice):
     """Orquestra device"""
+
     short_name = "orquestra.forest"
 
     qe_component = "qe-forest"
