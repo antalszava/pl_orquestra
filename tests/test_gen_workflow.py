@@ -92,3 +92,4 @@ class TestExpvalTemplate:
         assert workflow['steps'][1]['outputs'] == test_wf['steps'][1]['outputs']
         assert workflow['types'] == test_wf['types']
         assert workflow == test_wf
+        print(workflow)
