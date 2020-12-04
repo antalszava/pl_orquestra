@@ -224,10 +224,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         return res
 
     def batch_execute(self, circuits, **kwargs):
-        # 1. Create the backend specs based on Device options and run_kwargs
-        idx = 0
-
         results = []
+        idx = 0
         file_prefix = f'{str(uuid.uuid4())}'
 
         # Iterating through the circuits based on the allowed number of
@@ -236,7 +234,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             end_idx = idx + self._batch_size
             batch = circuits[idx:end_idx]
             file_id = f'{file_prefix}-{str(idx)}'
+
             res = self._batch_execute(batch, file_id, **kwargs)
+
             results.extend(res)
             idx += self._batch_size
 
