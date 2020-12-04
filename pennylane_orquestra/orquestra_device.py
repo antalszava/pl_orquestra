@@ -3,6 +3,7 @@ Base device class for PennyLane-Orquestra.
 """
 import abc
 import json
+import uuid
 import re
 import appdirs
 
@@ -30,15 +31,27 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     The ``~.batch_execute`` method can be utilized to send workflows that
     contain several circuits which are computed in parallel on a remote device.
 
+    The workflow files generated are placed into a user specific data folder
+    specified by the output of ``appdirs.user_data_dir("pennylane-orquestra",
+    "Xanadu")``. By default, such files are removed (see
+    ``keep_workflow_files`` keyword argument). After each device execution,
+    filenames for the generated workflows are stored in the ``_file_names``
+    attribute.
+    
+    Computing the expectation value of the identity operator does not involve a
+    workflow submission (hence no files are created).
+
     Args:
-        wires (int, Iterable[Number, str]]): Number of subsystems represented by the device,
-            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
-            or strings (``['ancilla', 'q1', 'q2']``). Default 1 if not specified.
+        wires (int, Iterable[Number, str]]): Number of subsystems represented
+            by the device, or iterable that contains unique labels for the
+            subsystems as numbers (i.e., ``[-1, 0, 2]``) or strings (``['ancilla',
+            'q1', 'q2']``). Default 1 if not specified.
         shots (int): number of circuit evaluations/random samples used to estimate
             expectation values of observables
-        analytic (bool): If ``True``, the device calculates probability, expectation values,
-            and variances analytically. If ``False``, a finite number of samples set by
-            the argument ``shots`` are used to estimate these quantities.
+        analytic (bool): If ``True``, the device calculates probability,
+            expectation values, and variances analytically. If ``False``, a finite
+            number of samples set by the argument ``shots`` are used to estimate
+            these quantities.
 
     Keyword Args:
         backend_device=None (str): the Orquestra backend device to use for the
@@ -47,11 +60,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             ``~.batch_execute`` method to send multiple workflows
         keep_workflow_files=False (bool): Whether or not the workflow files
             generated during the circuit execution should be kept or deleted.
-            These files are placed into a user specific data folder specified
-            by the output of ``appdirs.user_data_dir("pennylane-orquestra",
-            "Xanadu")``. Computing the expectation value of the identity
-            observable does not involve a workflow submission (hence no files
-            are created).
         timeout=300 (int): seconds to wait until raising a TimeoutError
     """
 
@@ -101,6 +109,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
         self._timeout = kwargs.get("timeout", 300)
         self._latest_id = None
+        self._file_names = []
         self._backend_specs = None
 
     def apply(self, operations, **kwargs):
@@ -184,11 +193,16 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             self.qe_component,
             self.backend_specs, qasm_circuit, ops, **kwargs
         )
-        filename = 'expval.yaml'
+        file_id = str(uuid.uuid4())
+        filename = f'expval-{file_id}.yaml'
         filepath = write_workflow_file(filename, workflow)
 
         # 6. Submit the workflow
         workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
+
+        if self._keep_workflow_files:
+            self._file_names.append(filename)
+
         self._latest_id = workflow_id
 
         # 7. Loop until finished
@@ -214,12 +228,14 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         idx = 0
 
         results = []
+        file_prefix = f'{str(uuid.uuid4())}'
 
         # Iterating through the circuits based on the allowed number of
         # circuits per workflow
         while idx < len(circuits): 
             end_idx = idx + self._batch_size
             batch = circuits[idx:end_idx]
+            file_id = f'{file_prefix}-{str(batch_idx)}'
             res = self._batch_execute(batch, idx, **kwargs)
             results.extend(res)
             idx += self._batch_size
@@ -283,12 +299,16 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             self.qe_component,
             self.backend_specs, qasm_circuits, ops, **kwargs
         )
-        filename = f'expval-{str(batch_idx)}.yaml'
+
+        filename = f'expval-{file_id}.yaml'
         filepath = write_workflow_file(filename, workflow)
 
         # 5. Submit the workflow
         workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
         self._latest_id = workflow_id
+
+        if self._keep_workflow_files:
+            self._file_names.append(filename)
 
         # 6. Loop until finished
         data = loop_until_finished(workflow_id, timeout=self._timeout)

@@ -1,6 +1,7 @@
 import pytest
 import subprocess
 import os
+import uuid
 import time
 import numpy as np
 
@@ -69,8 +70,10 @@ class TestBaseDevice:
         file_name = 'test_workflow.yaml'
         dev = qml.device('orquestra.forest', wires=3, keep_workflow_files=keep)
         mock_res_dict = {'First': {'expval': {'list': [{'list': 123456789}]}}}
+        test_uuid = "1234"
 
         assert not os.path.exists(tmpdir.join("expval.yaml"))
+        assert not dev._file_names
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
@@ -79,6 +82,7 @@ class TestBaseDevice:
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
                     mock_res_dict)
+            m.setattr(uuid, "uuid4", lambda *args: test_uuid)
 
             @qml.qnode(dev)
             def circuit():
@@ -86,7 +90,8 @@ class TestBaseDevice:
                 return qml.expval(qml.PauliZ(0))
 
             assert circuit() == 123456789
-            file_kept = os.path.exists(tmpdir.join("expval.yaml"))
+            file_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
+            assert dev._file_names == ([f"expval-{test_uuid}.yaml"] if keep else [])
             assert file_kept if keep else not file_kept
 
     @pytest.mark.parametrize("timeout", [1,2.5])
