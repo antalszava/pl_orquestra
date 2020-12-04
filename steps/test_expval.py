@@ -27,7 +27,7 @@ sampling_devices = [
     '{"module_name": "qequlacs.simulator", "function_name": "QulacsSimulator", "n_samples": 10000}',
 ]
 
-tol = 10e-6
+tol = 10e-2
 
 
 @pytest.mark.parametrize("backend_specs", exact_devices)

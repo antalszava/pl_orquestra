@@ -6,26 +6,20 @@ Functions defined in this file may be included in an Orquestra workflow file as
 a workflow step. Such workflow steps are executed on a remote Orquestra node.
 """
 import json
-from zquantum.core.utils import create_object, save_value_estimate, save_list, ValueEstimate
-from openfermion import QubitOperator, SymbolicOperator, IsingOperator
-from zquantum.core.circuit import Circuit
 
-from zquantum.core.measurement import (
-    expectation_values_to_real,
-    ExpectationValues,
-    Measurements,
-)
-
-from qiskit import QuantumCircuit
 import numpy as np
+from openfermion import IsingOperator, QubitOperator
+from qiskit import QuantumCircuit
 
-from collections import Sequence
+from zquantum.core.circuit import Circuit
+from zquantum.core.measurement import expectation_values_to_real
+from zquantum.core.utils import create_object, save_list
 
 
 def run_circuit_and_get_expval(
     backend_specs: dict,
     circuit: str,
-    operators: list,
+    operators: str,
     noise_model: str = "None",
     device_connectivity: str = "None",
 ):
@@ -35,6 +29,12 @@ def run_circuit_and_get_expval(
     All backend calls used in this function are defined as ``QuantumBackend``
     and ``QuantumSimulator`` interface standard methods implemented are defined
     in the ``z-quantum-core`` repository.
+
+    There are two computation modes: sampling and exact. Expectation values are
+    computed by post-processing samples when an Orquestra ``QuantumBackend`` is
+    used or the number of samples was specified for a ``QuantumSimulator``
+    backend. When the number of samples was not specified, ``QuantumSimulator``
+    backends run in exact mode.
 
     Args:
         backend_specs (dict): the parsed Orquestra backend specifications
@@ -57,18 +57,13 @@ def run_circuit_and_get_expval(
 
     backend = create_object(backend_specs)
 
-    sampling_mode = backend.n_samples is not None
-
     # 1. Parse circuit
     qc = QuantumCircuit.from_qasm_str(circuit)
-
-    if not isinstance(operators, Sequence):
-        operators = [target_operator]
 
     # 2. Create operators
     ops = []
     for op in operators:
-        if sampling_mode:
+        if backend.n_samples is not None:
             # Operator for Backend/Simulator in sampling mode
             ops.append(IsingOperator(op))
         else:
@@ -108,9 +103,34 @@ def run_circuit_and_get_expval(
     circuit = Circuit(qc)
 
     # 3. Expval
+    results = _get_expval(backend, circuit, ops)
+
+    save_list(results, "expval.json")
+
+
+def _get_expval(backend, circuit, ops):
+    """Auxiliary function to get the expectation value of a list of operators
+    given a quantum circuit and a quantum backend.
+
+    In sampling mode, the same measurement outcomes are post-processed for each
+    operator. In exact mode, the statevector prepared by the quantum circuit is
+    simulated separately for each operator. This is required so that the
+    standard ``get_exact_expectation_values`` method of the ``QuantumBackend``
+    interface can be used.
+
+    Args:
+        backend (QuantumBackend): the Orquestra quantum backend to use
+        circuit (zquantum.core.circuit.Circuit): the circuit represented as an
+            OpenQASM 2.0 program
+        operators (list): a list of operators as ``openfermion.QubitOperator``
+            or ``openfermion.IsingOperator`` objects
+
+    Returns:
+        list: list of expectation values for each operator
+    """
     results = []
-    if sampling_mode:
-        # Sampling mode --- Simulator sampling or Backend
+
+    if backend.n_samples is not None:
         measurements = backend.run_circuit_and_measure(circuit)
 
         # Iterating through the operators specified e.g., [IsingOperator("[Z0]
@@ -126,15 +146,10 @@ def run_circuit_and_get_expval(
             val = np.sum(expectation_values.values)
             results.append(val)
     else:
-        # Exact version --- Simulator exact
         for op in ops:
-            # Note: each expval considers the circuit separately
-            # As the logic is backend specific, better to use the standard
-            # get_exact_expectation_values method (instead of caching the state
-            # in some way)
             expectation_values = backend.get_exact_expectation_values(circuit, op)
 
             val = np.sum(expectation_values.values)
             results.append(val)
 
-    save_list(results, "expval.json")
+    return results
