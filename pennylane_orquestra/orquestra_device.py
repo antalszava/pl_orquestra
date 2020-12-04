@@ -35,7 +35,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     specified by the output of ``appdirs.user_data_dir("pennylane-orquestra",
     "Xanadu")``. By default, such files are removed (see
     ``keep_workflow_files`` keyword argument). After each device execution,
-    filenames for the generated workflows are stored in the ``_file_names``
+    filenames for the generated workflows are stored in the ``filenames``
     attribute.
     
     Computing the expectation value of the identity operator does not involve a
@@ -109,7 +109,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self._keep_workflow_files = kwargs.get("keep_workflow_files", False)
         self._timeout = kwargs.get("timeout", 300)
         self._latest_id = None
-        self._file_names = []
+        self._filenames = []
         self._backend_specs = None
 
     def apply(self, operations, **kwargs):
@@ -201,7 +201,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         workflow_id = qe_submit(filepath, keep_file=self._keep_workflow_files)
 
         if self._keep_workflow_files:
-            self._file_names.append(filename)
+            self._filenames.append(filename)
 
         self._latest_id = workflow_id
 
@@ -308,7 +308,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self._latest_id = workflow_id
 
         if self._keep_workflow_files:
-            self._file_names.append(filename)
+            self._filenames.append(filename)
 
         # 6. Loop until finished
         data = loop_until_finished(workflow_id, timeout=self._timeout)
@@ -367,6 +367,16 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         Returns:
             str: the ID of the latest workflow that has been submitted
+        """
+        return self._latest_id
+
+    @property
+    def filenames(self):
+        """Returns the names of the workflow files created during device
+        executions.
+
+        Returns:
+            list: the workflow filenames
         """
         return self._latest_id
 

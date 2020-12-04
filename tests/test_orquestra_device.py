@@ -73,7 +73,7 @@ class TestBaseDevice:
         test_uuid = "1234"
 
         assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
-        assert not dev._file_names
+        assert not dev.filenames
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
@@ -94,7 +94,7 @@ class TestBaseDevice:
             assert circuit() == 123456789
             file_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
             assert file_kept if keep else not file_kept
-            assert dev._file_names == ([f"expval-{test_uuid}.yaml"] if keep else [])
+            assert dev.filenames == ([f"expval-{test_uuid}.yaml"] if keep else [])
 
     @pytest.mark.parametrize("timeout", [1,2.5])
     def test_timeout(self, timeout, tmpdir, monkeypatch):
@@ -488,4 +488,5 @@ class TestBatchExecute:
         # Check that workflow files were either all kept or all deleted
         files_kept = file0_kept and file1_kept and file2_kept
         assert files_kept and file0_kept if keep else not files_kept
+
         qml.disable_tape()
