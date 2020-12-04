@@ -9,20 +9,10 @@ import pennylane as qml
 import pennylane.tape
 import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
-from conftest import test_batch_res0, test_batch_res1, test_batch_res2, test_batch_result, resources_default
+from conftest import test_batch_res0, test_batch_res1, test_batch_res2, test_batch_result, resources_default, MockOpen
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator", "n_samples": 1000}'
-
-
-class MockPopen:
-    """A mock class that allows to mock the self.stdout.readlines() call."""
-    def __init__(self):
-        class MockStdOut: 
-            def readlines(*args):
-                return 'Successfully submitted workflow to quantum engine!\n'
-    
-        self.stdout = MockStdOut()
 
 
 class TestBaseDevice:

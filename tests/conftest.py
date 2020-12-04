@@ -5,7 +5,7 @@ plugin.
 import subprocess
 from copy import deepcopy
 
-# Auxiliary functions
+# Auxiliary classes and functions
 def qe_list_workflow():
     """Function for a CLI call to list workflows.
 
@@ -17,6 +17,21 @@ def qe_list_workflow():
         ["qe", "list", "workflow"], stdout=subprocess.PIPE, universal_newlines=True
     )
     return process.stdout.readlines()
+
+class MockPopen:
+    """A mock class that allows to mock the self.stdout.readlines() call."""
+    def __init__(self, msg=None):
+        class MockStdOut: 
+            def __init__(self, msg):
+                self.msg = msg
+
+            def readlines(self, *args):
+                if self.msg is None:
+                    self.msg = 'Successfully submitted workflow to quantum engine!\n'
+                return msg
+    
+        self.stdout = MockStdOut(msg)
+
 
 # Auxiliary data
 

@@ -1,3 +1,7 @@
+"""
+Unit tests for the ```cli_actions`` module, without sending any requests to
+Orquestra.
+"""
 import pytest
 import subprocess
 
@@ -6,14 +10,34 @@ import pennylane_orquestra.gen_workflow as gw
 import pennylane_orquestra
 from pennylane_orquestra.cli_actions import qe_submit, write_workflow_file, loop_until_finished
 
-from conftest import backend_specs_default, qasm_circuit_default, operator_string_default
+from conftest import backend_specs_default, qasm_circuit_default, operator_string_default, MockPopen
 
 class TestCLIFunctions:
-    """Test functions for CLI actions work as expected.
-    
-    These tests are meant to be unit tests without sending any requests to
-    Orquestra.
-    """
+    """Test functions for CLI actions work as expected."""
+
+    def test_submit_raises_no_success(self, monkeypatch):
+        """Test that the qe_submit method raises an error if not a successful
+        message was received."""
+
+        no_success_msg = "Not a success message."
+        with monkeypatch.context() as m:
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen(no_success_msg))
+
+            with pytest.raises(ValueError, match=no_success_msg):
+                workflow_id = qe_submit("some_filename")
+
+    def test_submit_raises_unexpected_resp(self, monkeypatch):
+        """Test that the qe_submit method raises an error if the workflow id
+        could not be obtained."""
+
+        unexp_resp_msg = "Received an unexpected response after submitting workflow."
+        with monkeypatch.context() as m:
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen(unexp_resp_msg))
+
+            with pytest.raises(ValueError, match=unexp_resp_msg):
+                workflow_id = qe_submit("some_filename")
 
     def test_write_workflow_file(self, tmpdir, monkeypatch):
         """Test that filling in the workflow template for getting expectation

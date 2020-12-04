@@ -65,8 +65,12 @@ def qe_submit(filepath, keep_file=False):
     if not keep_file:
         os.remove(filepath)
 
-    # Get the workflow ID after submitting a workflow
-    workflow_id = res[1].split()[-1]
+    try:
+        # Get the workflow ID after submitting a workflow
+        workflow_id = res[1].split()[-1]
+    except IndexError as e:
+        raise ValueError("Received an unexpected response after submitting workflow.") from e
+
     return workflow_id
 
 def workflow_details(workflow_id):
