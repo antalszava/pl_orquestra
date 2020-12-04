@@ -1,4 +1,9 @@
+"""
+Test data and auxiliary functions used for testing the PennyLane-Orquestra
+plugin.
+"""
 import subprocess
+from copy import deepcopy
 
 # Auxiliary functions
 def qe_list_workflow():
@@ -127,6 +132,13 @@ test_workflow = {
     "steps": steps,
     "types": types,
 }
+
+test_workflow_resources = deepcopy(test_workflow)
+test_workflow_resources['steps'][0]['config']['resources'] = resources_default
+test_workflow_resources['steps'][1]['config']['resources'] = resources_default
+
+# Test workflow result for 3 steps
+
 test_batch_res0 = 0.777506938122745
 test_batch_res1 = 13.321
 test_batch_res2 = 1.234 
@@ -134,8 +146,6 @@ test_batch_res2 = 1.234
 step_name0 = "run-circuit-and-get-expval-0"
 step_name1 = "run-circuit-and-get-expval-1"
 step_name2 = "run-circuit-and-get-expval-2"
-
-# Test workflow result for 3 steps
 
 # The step names are not in order ("class" entry in each nested dictionary): the
 # order of results differs from the way they were assumed to be submitted
