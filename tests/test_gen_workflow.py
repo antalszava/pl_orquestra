@@ -25,7 +25,7 @@ class TestExpvalTemplate:
         backend_component = "qe-forest"
 
         # Fill in workflow template
-        workflow = gw.expval_template(
+        workflow = gw.gen_expval_workflow(
             backend_component, backend_specs_default, qasm_circuit_default, operator_string_default
         )
 
@@ -41,7 +41,7 @@ class TestExpvalTemplate:
 
         # Fill in workflow template
         with pytest.raises(ValueError, match="The specified backend component is not supported."):
-            workflow = gw.expval_template(
+            workflow = gw.gen_expval_workflow(
                 backend_component,
                 backend_specs_default,
                 qasm_circuit_default,
@@ -58,7 +58,7 @@ class TestExpvalTemplate:
 
         # Fill in workflow template
         circuits = [qasm_circuit_default, qasm_circuit_default]
-        workflow = gw.expval_template(
+        workflow = gw.gen_expval_workflow(
             backend_component,
             backend_specs_default,
             circuits,

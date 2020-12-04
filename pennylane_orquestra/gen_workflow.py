@@ -74,7 +74,7 @@ def step_dictionary(name_suffix):
     return step_dict
 
 
-def expval_template(component, backend_specs, circuits, operators, **kwargs):
+def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs):
     """Workflow template for computing the expectation value of operators
     given a quantum circuit and a device backend.
 

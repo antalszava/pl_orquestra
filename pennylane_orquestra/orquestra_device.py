@@ -17,7 +17,7 @@ from pennylane.utils import decompose_hamiltonian
 
 from . import __version__
 from .utils import _terms_to_qubit_operator_string
-from .gen_workflow import expval_template
+from .gen_workflow import gen_expval_workflow
 from .cli_actions import qe_submit, loop_until_finished, write_workflow_file
 
 
@@ -193,7 +193,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         qasm_circuit = [qasm_circuit]
 
         # 4-5. Create the backend specs & workflow file
-        workflow = expval_template(
+        workflow = gen_expval_workflow(
             self.qe_component,
             self.backend_specs,
             qasm_circuit,
@@ -305,7 +305,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         ops = [json.dumps(o) for o in ops]
 
         # 3-4. Create the backend specs & workflow file
-        workflow = expval_template(
+        workflow = gen_expval_workflow(
             self.qe_component,
             self.backend_specs,
             qasm_circuits,

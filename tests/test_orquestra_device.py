@@ -15,7 +15,7 @@ from conftest import (
     test_batch_res2,
     test_batch_result,
     resources_default,
-    MockOpen,
+    MockPopen,
 )
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator"}'
@@ -235,7 +235,7 @@ class TestBaseDevice:
             get_resources_passed = lambda *args, **kwargs: recorder.append(
                 kwargs.get("resources", False)
             )
-            m.setattr(pennylane_orquestra.orquestra_device, "expval_template", get_resources_passed)
+            m.setattr(pennylane_orquestra.orquestra_device, "gen_expval_workflow", get_resources_passed)
 
             # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())

@@ -46,7 +46,7 @@ class TestCLIFunctions:
         backend_component = "qe-forest"
 
         # Fill in workflow template
-        workflow = gw.expval_template(
+        workflow = gw.gen_expval_workflow(
             backend_component, backend_specs_default, qasm_circuit_default, operator_string_default
         )
 

@@ -2,14 +2,14 @@
 This module contains utilities and auxiliary functions for using the Orquestra
 Quantum Engine command line interface (CLI).
 """
-
-import sys
 import subprocess
 import time
 import os
+import urllib.request
+import json
+
 import yaml
 from appdirs import user_data_dir
-import urllib.request, json
 
 
 def qe_get(workflow_id, option="workflow"):
@@ -127,7 +127,7 @@ def write_workflow_file(filename, workflow):
     with open(filepath, "w") as file:
         # The order of the keys within the YAML file is pre-defined for Orquestra,
         # hence need to keep the order
-        d = yaml.dump(workflow, file, sort_keys=False)
+        yaml.dump(workflow, file, sort_keys=False)
 
     return filepath
 

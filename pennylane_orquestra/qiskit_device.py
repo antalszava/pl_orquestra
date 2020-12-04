@@ -1,16 +1,9 @@
 """
 The Qiskit device class for PennyLane-Orquestra.
 """
-import numpy as np
 import warnings
 
-from pennylane import QubitDevice, DeviceError
-from pennylane.operation import Sample, Variance, Expectation, Probability, State
-from pennylane.ops import QubitStateVector, BasisState, QubitUnitary, CRZ, PhaseShift
-from pennylane.wires import Wires
-
 from .orquestra_device import OrquestraDevice
-from . import __version__
 
 
 class QeQiskitDevice(OrquestraDevice):
