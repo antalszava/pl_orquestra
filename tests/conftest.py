@@ -17,18 +17,20 @@ def qe_list_workflow():
     )
     return process.stdout.readlines()
 
+
 class MockPopen:
     """A mock class that allows to mock the self.stdout.readlines() call."""
+
     def __init__(self, msg=None):
-        class MockStdOut: 
+        class MockStdOut:
             def __init__(self, msg):
                 self.msg = msg
 
             def readlines(self, *args):
                 if self.msg is None:
-                    self.msg = 'Successfully submitted workflow to quantum engine!\n'
+                    self.msg = "Successfully submitted workflow to quantum engine!\n"
                 return msg
-    
+
         self.stdout = MockStdOut(msg)
 
 
@@ -148,14 +150,14 @@ test_workflow = {
 }
 
 test_workflow_resources = deepcopy(test_workflow)
-test_workflow_resources['steps'][0]['config']['resources'] = resources_default
-test_workflow_resources['steps'][1]['config']['resources'] = resources_default
+test_workflow_resources["steps"][0]["config"]["resources"] = resources_default
+test_workflow_resources["steps"][1]["config"]["resources"] = resources_default
 
 # Test workflow result for 3 steps
 
 test_batch_res0 = 0.777506938122745
 test_batch_res1 = 13.321
-test_batch_res2 = 1.234 
+test_batch_res2 = 1.234
 
 step_name0 = "run-circuit-and-get-expval-0"
 step_name1 = "run-circuit-and-get-expval-1"

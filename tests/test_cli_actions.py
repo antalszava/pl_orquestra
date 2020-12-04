@@ -12,6 +12,7 @@ from pennylane_orquestra.cli_actions import qe_submit, write_workflow_file, loop
 
 from conftest import backend_specs_default, qasm_circuit_default, operator_string_default, MockPopen
 
+
 class TestCLIFunctions:
     """Test functions for CLI actions work as expected."""
 
@@ -42,13 +43,14 @@ class TestCLIFunctions:
     def test_write_workflow_file(self, tmpdir, monkeypatch):
         """Test that filling in the workflow template for getting expectation
         values produces a valid yaml."""
-        backend_component = 'qe-forest'
+        backend_component = "qe-forest"
 
         # Fill in workflow template
-        workflow = gw.expval_template(backend_component, backend_specs_default,
-                qasm_circuit_default, operator_string_default)
+        workflow = gw.expval_template(
+            backend_component, backend_specs_default, qasm_circuit_default, operator_string_default
+        )
 
-        file_name = 'test_workflow.yaml'
+        file_name = "test_workflow.yaml"
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
             write_workflow_file(file_name, workflow)
@@ -63,8 +65,12 @@ class TestCLIFunctions:
         """Check that certain errors are raised and handled correctly by the
         loop_until_finished function."""
         with monkeypatch.context() as m:
-            m.setattr(pennylane_orquestra.cli_actions, "workflow_details", lambda *args: "Some message1")
-            m.setattr(pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: res_msg)
+            m.setattr(
+                pennylane_orquestra.cli_actions, "workflow_details", lambda *args: "Some message1"
+            )
+            m.setattr(
+                pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: res_msg
+            )
 
             # Check that indexing into the message raises an IndexError
             # (this shows that it will be handled internally)
@@ -82,9 +88,15 @@ class TestCLIFunctions:
             result_message = "Some message2"
 
             m.setattr(pennylane_orquestra.cli_actions, "workflow_details", lambda *args: status)
-            m.setattr(pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: result_message)
+            m.setattr(
+                pennylane_orquestra.cli_actions,
+                "get_workflow_results",
+                lambda *args: result_message,
+            )
 
             # Check that looping raises an error if the workflow details
             # contain a failed status
-            with pytest.raises(ValueError, match=f"Something went wrong with executing the workflow. {status}"):
+            with pytest.raises(
+                ValueError, match=f"Something went wrong with executing the workflow. {status}"
+            ):
                 loop_until_finished("Some ID", timeout=1)

@@ -19,7 +19,13 @@ from pennylane_orquestra.cli_actions import qe_submit, workflow_details
 
 from qiskit import IBMQ
 
-from conftest import qe_list_workflow, backend_specs_default, operator_string_default, qasm_circuit_default, resources_default
+from conftest import (
+    qe_list_workflow,
+    backend_specs_default,
+    operator_string_default,
+    qasm_circuit_default,
+    resources_default,
+)
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}'
@@ -34,20 +40,22 @@ class TestWorkflowSubmissionIntegration:
         values can be submitted to Orquestra and workflow details can be queried."""
         # Skip if not logged in to Orquestra
         try_resp = qe_list_workflow()
-        need_login_msg = 'token has expired, please log in again\n'
+        need_login_msg = "token has expired, please log in again\n"
 
         if need_login_msg in try_resp:
             pytest.skip("Has not logged in to the Orquestra platform.")
 
-        backend_component = 'qe-forest'
+        backend_component = "qe-forest"
         op = ['["[Z0]"]']
         circuits = [qasm_circuit_default]
 
         # Fill in workflow template
-        workflow = gw.expval_template(backend_component, backend_specs_default, circuits, op, resources=resources)
-        file_name = tmpdir.join('test_workflow.yaml')
+        workflow = gw.expval_template(
+            backend_component, backend_specs_default, circuits, op, resources=resources
+        )
+        file_name = tmpdir.join("test_workflow.yaml")
 
-        with open(file_name, 'w') as file:
+        with open(file_name, "w") as file:
             d = yaml.dump(workflow, file)
 
         # Submit a workflow
@@ -63,7 +71,7 @@ class TestWorkflowSubmissionIntegration:
         requirements raises an error."""
         # Skip if not logged in to Orquestra
         try_resp = qe_list_workflow()
-        need_login_msg = 'token has expired, please log in again\n'
+        need_login_msg = "token has expired, please log in again\n"
 
         if need_login_msg in try_resp:
             pytest.skip("Has not logged in to the Orquestra platform.")
@@ -75,9 +83,9 @@ class TestWorkflowSubmissionIntegration:
 
         # Fill in workflow template
         workflow = gw.expval_template(backend_component, backend_specs_default, circuits, operator)
-        file_name = tmpdir.join('test_workflow.yaml')
+        file_name = tmpdir.join("test_workflow.yaml")
 
-        with open(file_name, 'w') as file:
+        with open(file_name, "w") as file:
             d = yaml.dump(workflow, file)
 
         # Submit a workflow --- error due to the operator
@@ -86,12 +94,13 @@ class TestWorkflowSubmissionIntegration:
 
 
 devices = [
-        ('orquestra.forest', 'wavefunction-simulator', True),
-        ('orquestra.forest', 'wavefunction-simulator', False),
-        ('orquestra.qiskit', 'statevector_simulator', True),
-        ('orquestra.qiskit', 'statevector_simulator', False),
-        ('orquestra.qiskit', 'qasm_simulator', False),
+    ("orquestra.forest", "wavefunction-simulator", True),
+    ("orquestra.forest", "wavefunction-simulator", False),
+    ("orquestra.qiskit", "statevector_simulator", True),
+    ("orquestra.qiskit", "statevector_simulator", False),
+    ("orquestra.qiskit", "qasm_simulator", False),
 ]
+
 
 class TestOrquestraIntegration:
     """Test the Orquestra integration with PennyLane."""
@@ -103,7 +112,7 @@ class TestOrquestraIntegration:
 
         # Skip if not logged in to Orquestra
         try_resp = qe_list_workflow()
-        need_login_msg = 'token has expired, please log in again\n'
+        need_login_msg = "token has expired, please log in again\n"
 
         if need_login_msg in try_resp:
             pytest.skip("Has not logged in to the Orquestra platform.")
@@ -118,11 +127,11 @@ class TestOrquestraIntegration:
     def test_compute_expval_including_identity(self):
         """Test a simple circuit that involves computing the expectation value of the
         Identity operator."""
-        dev = qml.device('orquestra.qiskit', wires=3)
+        dev = qml.device("orquestra.qiskit", wires=3)
 
         # Skip if not logged in to Orquestra
         try_resp = qe_list_workflow()
-        need_login_msg = 'token has expired, please log in again\n'
+        need_login_msg = "token has expired, please log in again\n"
 
         if need_login_msg in try_resp:
             pytest.skip("Has not logged in to the Orquestra platform.")
@@ -132,7 +141,11 @@ class TestOrquestraIntegration:
             qml.PauliX(0)
             qml.PauliX(1)
             qml.PauliX(2)
-            return qml.expval(qml.Identity(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.Identity(2))
+            return (
+                qml.expval(qml.Identity(0)),
+                qml.expval(qml.PauliZ(1)),
+                qml.expval(qml.Identity(2)),
+            )
 
         assert np.allclose(circuit(), np.array([1, -1, 1]))
 
@@ -140,7 +153,7 @@ class TestOrquestraIntegration:
         """Test that the value of the jacobian computed using the internal
         batch_execute method corresponds to the value computed with
         the default.qubit device.
-        
+
         There are ``qubits * layers * 3 * 2`` many circuits to evaluate.
         """
         qml.enable_tape()
@@ -151,7 +164,13 @@ class TestOrquestraIntegration:
         layers = 1
         weights = qml.init.strong_ent_layers_uniform(layers, qubits)
 
-        dev1 = qml.device("orquestra.qiskit", backend="statevector_simulator", wires=qubits, analytic=True, keep_files=True)
+        dev1 = qml.device(
+            "orquestra.qiskit",
+            backend="statevector_simulator",
+            wires=qubits,
+            analytic=True,
+            keep_files=True,
+        )
         dev2 = qml.device("default.qubit", wires=qubits, analytic=True)
 
         def func(weights):
@@ -181,14 +200,15 @@ def token():
 
     return t
 
+
 class TestOrquestraIBMQIntegration:
     def test_apply_x(self, token):
         """Test a simple circuit that applies PauliX on the first wire."""
-        dev = qml.device('orquestra.ibmq', wires=3, ibmqx_token=token)
+        dev = qml.device("orquestra.ibmq", wires=3, ibmqx_token=token)
 
         # Skip if not logged in to Orquestra
         try_resp = qe_list_workflow()
-        need_login_msg = 'token has expired, please log in again\n'
+        need_login_msg = "token has expired, please log in again\n"
 
         if need_login_msg in try_resp:
             pytest.skip("Has not logged in to the Orquestra platform.")

@@ -25,11 +25,13 @@ class TestUtils:
     def test_terms_to_qubit_operator_no_decomp(self):
         coeffs = np.array([0.1, 0.2])
         ops = [
-            qml.operation.Tensor(qml.PauliX(wires=['w0'])),
-            qml.operation.Tensor(qml.PauliY(wires=['w0']), qml.PauliZ(wires=['w2']))
+            qml.operation.Tensor(qml.PauliX(wires=["w0"])),
+            qml.operation.Tensor(qml.PauliY(wires=["w0"]), qml.PauliZ(wires=["w2"])),
         ]
-        op_str = utils._terms_to_qubit_operator_string(coeffs, ops, wires=qml.wires.Wires(['w0', 'w1', 'w2']))
-        expected = '0.1 [X0] + 0.2 [Y0 Z2]'
+        op_str = utils._terms_to_qubit_operator_string(
+            coeffs, ops, wires=qml.wires.Wires(["w0", "w1", "w2"])
+        )
+        expected = "0.1 [X0] + 0.2 [Y0 Z2]"
         assert op_str == expected
 
     def test_terms_to_qubit_operator_no_decomp(self):
@@ -38,9 +40,9 @@ class TestUtils:
             qml.operation.Tensor(qml.PauliX(wires=[3])),
         ]
 
-        wire_map = {3:3}
+        wire_map = {3: 3}
         op_str = utils._terms_to_qubit_operator_string(coeffs, ops, wires=wire_map)
-        expected = '0.1 [X3]'
+        expected = "0.1 [X3]"
         assert op_str == expected
 
     def test_terms_to_qubit_operator_default(self):
@@ -50,7 +52,7 @@ class TestUtils:
         ]
 
         op_str = utils._terms_to_qubit_operator_string(coeffs, ops)
-        expected = '0.1 [X0]'
+        expected = "0.1 [X0]"
         assert op_str == expected
 
     def test_error_terms_to_qubit_operator(self):
@@ -80,12 +82,14 @@ class TestUtils:
          [0 0 0 4]]
         """
         coeffs = [2.5, -0.5, -1.0]
-        obs_list = [qml.Identity(wires=[0]) @ qml.Identity(wires=[1]),
-                qml.Identity(wires=[0]) @ qml.PauliZ(wires=[1]),
-                qml.PauliZ(wires=[0]) @ qml.Identity(wires=[1])]
+        obs_list = [
+            qml.Identity(wires=[0]) @ qml.Identity(wires=[1]),
+            qml.Identity(wires=[0]) @ qml.PauliZ(wires=[1]),
+            qml.PauliZ(wires=[0]) @ qml.Identity(wires=[1]),
+        ]
 
         op_str = utils._terms_to_qubit_operator_string(coeffs, obs_list)
 
         # Remove new line characters
-        op_str = op_str.replace('\n','')
+        op_str = op_str.replace("\n", "")
         assert op_str == "2.5 [] + -0.5 [Z1] + -1.0 [Z0]"

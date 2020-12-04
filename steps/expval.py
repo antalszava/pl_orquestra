@@ -21,6 +21,7 @@ import numpy as np
 
 from collections import Sequence
 
+
 def run_circuit_and_get_expval(
     backend_specs: dict,
     circuit: str,
@@ -61,7 +62,6 @@ def run_circuit_and_get_expval(
     # 1. Parse circuit
     qc = QuantumCircuit.from_qasm_str(circuit)
 
-
     if not isinstance(operators, Sequence):
         operators = [target_operator]
 
@@ -74,7 +74,6 @@ def run_circuit_and_get_expval(
         else:
             # Operator for Simulator exact mode
             ops.append(QubitOperator(op))
-
 
     # 2.+1
     # Activate the qubits that are measured but were not acted on
