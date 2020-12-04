@@ -1,5 +1,5 @@
 """
-The OrquestraQiskitdevice class for PennyLane-Orquestra.
+The Qiskit device class for PennyLane-Orquestra.
 """
 import numpy as np
 import warnings

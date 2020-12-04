@@ -1,3 +1,8 @@
+"""
+This module contains utilities and auxiliary functions for using the Orquestra
+Quantum Engine command line interface (CLI).
+"""
+
 import sys
 import subprocess
 import time
@@ -6,8 +11,10 @@ import yaml
 from appdirs import user_data_dir
 import urllib.request, json
 
+
 def qe_get(workflow_id, option='workflow'):
-    """Function for getting a information via a CLI call.
+    """Function for getting information via an Orquestra Quantum Engine CLI
+    call.
     
     This function is mostly used for retrieving workflow related information.
 
@@ -30,7 +37,8 @@ def qe_get(workflow_id, option='workflow'):
 def qe_submit(filepath, keep_file=False):
     """Function for submitting a workflow via a CLI call.
     
-    Handling response messages was based on using Orquestra API v1.0.0.
+    Handling submission response messages was based on using Orquestra API
+    v1.0.0.
 
     Args:
         filepath (str): the filepath for the workflow file
@@ -50,14 +58,11 @@ def qe_submit(filepath, keep_file=False):
                                universal_newlines=True)
     res = process.stdout.readlines()
 
-    # As per Orquestra API v1.0.0, we assume that the result message has a
-    # substring referring to successfuly submission
     details = "".join(res)
     if 'Success' not in details:
         raise ValueError(res)
 
     if not keep_file:
-        # Delete file
         os.remove(filepath)
 
     # Get the workflow ID after submitting a workflow
@@ -70,10 +75,6 @@ def workflow_details(workflow_id):
     Args:
         workflow_id (str): the workflow id for which information will be
             retrieved
-
-    Kwargs:
-        option (str): The option specified for the ``qe get`` CLI call.
-            Examples include ``workflow`` and ``workflowresult``.
 
     Returns:
         str: response message of the CLI call
@@ -116,8 +117,8 @@ def write_workflow_file(filename, workflow):
     filepath = os.path.join(directory, filename)
 
     with open(filepath, 'w') as file:
-        # Need to keep the order of the keys so that Orquestra accepts the YAML
-        # file
+        # The order of the keys within the YAML file is pre-defined for Orquestra,
+        # hence need to keep the order
         d = yaml.dump(workflow, file, sort_keys=False)
 
     return filepath
@@ -155,7 +156,8 @@ def loop_until_finished(workflow_id, timeout=300):
 
         if tries % 20 == 0:
 
-            # Check if the status shows that the workflow failed
+            # Check if the status shows that the workflow failed, after a
+            # certain number of tries
             status = workflow_details(workflow_id)
             details_string = "".join(status).split()
             if "Failed" in details_string:
@@ -183,7 +185,7 @@ def loop_until_finished(workflow_id, timeout=300):
         except urllib.error.URLError:
             continue
 
-    # 3. Obtain the data
+    # 3. Obtain the data from the URL
     with url:
         data = json.loads(url.read().decode())
 

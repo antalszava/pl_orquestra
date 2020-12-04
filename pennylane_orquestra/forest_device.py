@@ -1,5 +1,5 @@
 """
-The OrquestraForestdevice class for PennyLane-Orquestra.
+The Forest device class for PennyLane-Orquestra.
 """
 import numpy as np
 
@@ -9,8 +9,6 @@ from pennylane.ops import QubitStateVector, BasisState, QubitUnitary, CRZ, Phase
 from pennylane.wires import Wires
 
 from .orquestra_device import OrquestraDevice
-from . import __version__
-
 
 
 class QeForestDevice(OrquestraDevice):

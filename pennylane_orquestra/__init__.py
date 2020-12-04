@@ -1,3 +1,4 @@
+"""Top level PennyLane-Orquestra module"""
 from ._version import __version__
 
 from .orquestra_device import OrquestraDevice

@@ -1,5 +1,5 @@
 """
-The OrquestraQulacsdevice class for PennyLane-Orquestra.
+The Qulacs device class for PennyLane-Orquestra.
 """
 import numpy as np
 

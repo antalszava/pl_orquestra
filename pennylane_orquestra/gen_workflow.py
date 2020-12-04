@@ -1,3 +1,9 @@
+"""
+This module contains utilities and auxiliary functions for generating Orquestra
+workflows.
+"""
+# Backend import dictionaries used for generating Orquestra workflows
+
 forest_import = {'name': 'qe-forest',
    'type': 'git',
    'parameters': {'repository': 'git@github.com:zapatacomputing/qe-forest.git',
