@@ -3,7 +3,7 @@ The Qiskit device class for PennyLane-Orquestra.
 """
 import warnings
 
-from .orquestra_device import OrquestraDevice
+from pennylane_orquestra.orquestra_device import OrquestraDevice
 
 
 class QeQiskitDevice(OrquestraDevice):
