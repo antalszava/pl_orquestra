@@ -378,7 +378,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         Returns:
             list: the workflow filenames
         """
-        return self._latest_id
+        return self._filenames
 
     def serialize_circuit(self, circuit):
         """Serializes the circuit before submission according to the backend
