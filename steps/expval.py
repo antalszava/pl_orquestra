@@ -1,3 +1,10 @@
+"""
+The PennyLane-Orquestra step for computing the expectation value of Hermitian
+operators given a quantum circuit and a quantum device.
+
+Functions defined in this file may be included in an Orquestra workflow file as
+a workflow step. Such workflow steps are executed on a remote Orquestra node.
+"""
 import json
 from zquantum.core.utils import create_object, save_value_estimate, save_list, ValueEstimate
 from openfermion import QubitOperator, SymbolicOperator, IsingOperator
