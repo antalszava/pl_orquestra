@@ -60,6 +60,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             ``~.batch_execute`` method to send multiple workflows
         keep_files=False (bool): Whether or not the workflow files
             generated during the circuit execution should be kept or deleted.
+        resources (dict): the resources to be specified for each workflow step
         timeout=300 (int): seconds to wait until raising a TimeoutError
     """
 
@@ -107,6 +108,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         self.backend = kwargs.get('backend', None)
         self._batch_size = kwargs.get("batch_size", 10)
         self._keep_files = kwargs.get("keep_files", False)
+        self._resources = kwargs.get("resources", None)
         self._timeout = kwargs.get("timeout", 300)
         self._latest_id = None
         self._filenames = []
@@ -191,7 +193,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # 4-5. Create the backend specs & workflow file
         workflow = expval_template(
             self.qe_component,
-            self.backend_specs, qasm_circuit, ops, **kwargs
+            self.backend_specs, qasm_circuit, ops, resources=self._resources, **kwargs
         )
         file_id = str(uuid.uuid4())
         filename = f'expval-{file_id}.yaml'
@@ -297,7 +299,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # 3-4. Create the backend specs & workflow file
         workflow = expval_template(
             self.qe_component,
-            self.backend_specs, qasm_circuits, ops, **kwargs
+            self.backend_specs, qasm_circuits, ops, resources=self._resources, **kwargs
         )
 
         filename = f'expval-{file_id}.yaml'

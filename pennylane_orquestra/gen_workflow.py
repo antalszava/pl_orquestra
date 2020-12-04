@@ -144,6 +144,6 @@ def expval_template(component, backend_specs, circuits, operators, **kwargs):
         expval_template['steps'][idx]['inputs'].append({'noise_model': noise_model, 'type': 'noise-model'})
         expval_template['steps'][idx]['inputs'].append({'device_connectivity': device_connectivity, 'type': 'device-connectivity'})
         expval_template['steps'][idx]['inputs'].append({'operators': ops, 'type': 'string'})
-        expval_template['steps'][idx]['inputs'].append({'circuit': circ, 'type': 'string'})
 
+        expval_template['steps'][idx]['inputs'].append({'circuit': circ, 'type': 'string'})
     return expval_template

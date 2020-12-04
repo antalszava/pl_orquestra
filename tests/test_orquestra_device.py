@@ -9,7 +9,7 @@ import pennylane as qml
 import pennylane.tape
 import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
-from conftest import test_batch_res0, test_batch_res1, test_batch_res2, test_batch_result
+from conftest import test_batch_res0, test_batch_res1, test_batch_res2, test_batch_result, resources_default
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator", "n_samples": 1000}'
@@ -212,6 +212,38 @@ class TestBaseDevice:
                 assert np.allclose(r, e)
 
             qml.disable_tape()
+
+    @pytest.mark.parametrize("resources", [None, resources_default])
+    def test_got_resources(self, resources, monkeypatch):
+        """Test that the resource details defined when the device was created
+        are passed to generate the workflow."""
+        dev = qml.device('orquestra.qiskit', wires=2, resources=resources)
+        recorder = []
+        mock_res_dict = {'First': {'expval': {'list': [{'list': 123456789}]}}}
+
+        with monkeypatch.context() as m:
+
+            # Record the resources that were passed
+            get_resources_passed = lambda *args, **kwargs: recorder.append(kwargs.get("resources", False))
+            m.setattr(pennylane_orquestra.orquestra_device, "expval_template", get_resources_passed)
+
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(pennylane_orquestra.orquestra_device,
+                    "loop_until_finished", lambda *args, **kwargs:
+                    mock_res_dict)
+
+            @qml.qnode(dev)
+            def circuit():
+                qml.PauliX(0)
+                return qml.expval(qml.PauliZ(0))
+
+            assert circuit() == 123456789
+
+            # Check that the resorces were passed correctly
+            assert len(recorder) == 1 
+            assert recorder[0] == resources
+
 class TestCreateBackendSpecs:
     """Test the create_backend_specs function"""
 
