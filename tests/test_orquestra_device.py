@@ -72,7 +72,7 @@ class TestBaseDevice:
         mock_res_dict = {'First': {'expval': {'list': [{'list': 123456789}]}}}
         test_uuid = "1234"
 
-        assert not os.path.exists(tmpdir.join("expval.yaml"))
+        assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
         assert not dev._file_names
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
@@ -82,6 +82,8 @@ class TestBaseDevice:
             m.setattr(pennylane_orquestra.orquestra_device,
                     "loop_until_finished", lambda *args, **kwargs:
                     mock_res_dict)
+
+            # Disable random uuid generation
             m.setattr(uuid, "uuid4", lambda *args: test_uuid)
 
             @qml.qnode(dev)
@@ -91,8 +93,8 @@ class TestBaseDevice:
 
             assert circuit() == 123456789
             file_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
-            assert dev._file_names == ([f"expval-{test_uuid}.yaml"] if keep else [])
             assert file_kept if keep else not file_kept
+            assert dev._file_names == ([f"expval-{test_uuid}.yaml"] if keep else [])
 
     @pytest.mark.parametrize("timeout", [1,2.5])
     def test_timeout(self, timeout, tmpdir, monkeypatch):
@@ -102,14 +104,18 @@ class TestBaseDevice:
         dev = qml.device('orquestra.forest', wires=3, timeout=timeout)
         mock_res_dict = {'First': {'expval': {'list': [{'list': 123456789}]}}}
 
+        test_uuid = "1234"
         assert dev._timeout == timeout
-        assert not os.path.exists(tmpdir.join("expval.yaml"))
+        assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
             m.setattr(pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: "Test res")
 
             # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+
+            # Disable random uuid generation
+            m.setattr(uuid, "uuid4", lambda *args: test_uuid)
 
             @qml.qnode(dev)
             def circuit():
@@ -177,6 +183,7 @@ class TestBaseDevice:
 
         circuits = [tape1, tape2]
 
+        test_uuid = "1234"
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
@@ -186,12 +193,15 @@ class TestBaseDevice:
                     "loop_until_finished", lambda *args, **kwargs:
                     None)
 
+            # Disable random uuid generation
+            m.setattr(uuid, "uuid4", lambda *args: test_uuid)
+
             res = dev.batch_execute(circuits)
 
             # No workflow files were created because we only computed with
             # identities
-            assert not os.path.exists(tmpdir.join("expval-0.yaml"))
-            assert not os.path.exists(tmpdir.join("expval-1.yaml"))
+            assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
+            assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
 
             expected = [
                     np.ones(1),
@@ -392,7 +402,8 @@ class TestBatchExecute:
 
         circuits = [tape1, tape2, tape3]
 
-        assert not os.path.exists(tmpdir.join("expval.yaml"))
+        test_uuid = "1234"
+        assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}-0.yaml"))
 
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
@@ -403,15 +414,19 @@ class TestBatchExecute:
                     "loop_until_finished", lambda *args, **kwargs:
                     test_batch_result)
 
+            # Disable random uuid generation
+            m.setattr(uuid, "uuid4", lambda *args: test_uuid)
+
             res = dev.batch_execute(circuits)
 
             # Correct order of results is expected
             assert np.allclose(res[0], test_batch_res0)
             assert np.allclose(res[1], test_batch_res1)
             assert np.allclose(res[2], test_batch_res2)
-            file_kept = os.path.exists(tmpdir.join("expval-0.yaml"))
+            file_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}-0.yaml"))
 
-        assert file_kept if keep else not file_kept
+            assert file_kept if keep else not file_kept
+
         qml.disable_tape()
 
     @pytest.mark.parametrize("keep", [True, False])
@@ -443,9 +458,10 @@ class TestBatchExecute:
         dev = qml.device(dev_name, wires=3, batch_size=1, keep_workflow_files=keep)
 
         # Check that no workflow files were created before
-        assert not os.path.exists(tmpdir.join("expval-0.yaml"))
-        assert not os.path.exists(tmpdir.join("expval-1.yaml"))
-        assert not os.path.exists(tmpdir.join("expval-2.yaml"))
+        test_uuid = "1234"
+        assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}-0.yaml"))
+        assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}-1.yaml"))
+        assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}-2.yaml"))
 
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
@@ -456,15 +472,18 @@ class TestBatchExecute:
                     "loop_until_finished", lambda *args, **kwargs:
                     test_batch_result)
 
+            # Disable random uuid generation
+            m.setattr(uuid, "uuid4", lambda *args: test_uuid)
+
             res = dev.batch_execute(circuits)
 
             # Correct order of results is expected
             assert np.allclose(res[0], test_batch_res0)
             assert np.allclose(res[1], test_batch_res1)
             assert np.allclose(res[2], test_batch_res2)
-            file0_kept = os.path.exists(tmpdir.join("expval-0.yaml"))
-            file1_kept = os.path.exists(tmpdir.join("expval-1.yaml"))
-            file2_kept = os.path.exists(tmpdir.join("expval-2.yaml"))
+            file0_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}-0.yaml"))
+            file1_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}-1.yaml"))
+            file2_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}-2.yaml"))
 
         # Check that workflow files were either all kept or all deleted
         files_kept = file0_kept and file1_kept and file2_kept
