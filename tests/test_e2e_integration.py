@@ -92,8 +92,8 @@ class TestOrquestraIntegration:
     """
 
     @pytest.mark.parametrize("device_name,backend,analytic", devices)
-    def test_apply_x(self, device_name, backend, analytic):
-        """Test a simple circuit that applies PauliX on the first wire."""
+    def test_apply_hadamard(self, device_name, backend, analytic):
+        """Test a simple circuit that applies Hadamard on the first wire."""
         dev = qml.device(device_name, wires=3, backend_name=backend, analytic=analytic)
 
         # Skip if has not been authenticated with Orquestra
@@ -105,10 +105,10 @@ class TestOrquestraIntegration:
 
         @qml.qnode(dev)
         def circuit():
-            qml.PauliX(0)
+            qml.Hadamard(0)
             return qml.expval(qml.PauliZ(0))
 
-        assert circuit() == -1
+        assert math.isclose(circuit(), -1, abs_tol=1e-05)
 
     def test_compute_expval_including_identity(self):
         """Test a simple circuit that involves computing the expectation value of the

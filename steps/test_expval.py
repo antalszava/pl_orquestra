@@ -1,3 +1,8 @@
+"""
+This module contains tests locally checking that the functionality of the
+expval step is correct. Running the test cases requires the related packages to
+be installed locally.
+"""
 import pytest
 import numpy as np
 import expval

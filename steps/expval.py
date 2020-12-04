@@ -17,7 +17,6 @@ from zquantum.core.measurement import (
 )
 
 from qiskit import QuantumCircuit
-from qeqiskit.noise import get_qiskit_noise_model
 import numpy as np
 
 from collections import Sequence
@@ -51,7 +50,6 @@ def run_circuit_and_get_expval(
     operators = json.loads(operators)
 
     if noise_model != "None":
-        noise_model, device_connectivity = get_qiskit_noise_model()
         backend_specs["noise_model"] = load_noise_model(noise_model)
     if device_connectivity != "None":
         backend_specs["device_connectivity"] = load_circuit_connectivity(device_connectivity)
