@@ -21,5 +21,5 @@ class QeForestDevice(OrquestraDevice):
     qe_module_name = "qeforest.simulator"
     qe_function_name = "ForestSimulator"
 
-    def __init__(self, wires, shots=1024, backend_device="wavefunction-simulator", **kwargs):
-        super().__init__(wires, backend_device=backend_device, shots=shots, **kwargs)
+    def __init__(self, wires, shots=1024, backend="wavefunction-simulator", **kwargs):
+        super().__init__(wires, backend=backend, shots=shots, **kwargs)

@@ -24,7 +24,7 @@ class QeIBMQDevice(OrquestraDevice):
     qe_module_name = "qeqiskit.backend"
     qe_function_name = "QiskitBackend"
 
-    def __init__(self, wires, shots=1024, backend_device="ibmq_qasm_simulator", **kwargs):
+    def __init__(self, wires, shots=1024, backend="ibmq_qasm_simulator", **kwargs):
 
         self._token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)
 
@@ -37,7 +37,7 @@ class QeIBMQDevice(OrquestraDevice):
                     "analytic mode. Results are based on sampling.")
 
         kwargs["analytic"] = False
-        super().__init__(wires, backend_device=backend_device, shots=shots, **kwargs)
+        super().__init__(wires, backend=backend, shots=shots, **kwargs)
 
     def create_backend_specs(self):
         backend_dict = super().create_backend_specs()

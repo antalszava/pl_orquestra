@@ -27,7 +27,7 @@ The following Orquestra backends are supported at the moment:
 * `QulacsSimulator`: `"orquestra.qulacs"`
 * `IBMQBackend`: `"orquestra.ibmq"` (still under development)
 
-The `backend_device` option can be passed as a keyword argument to the
+The `backend` option can be passed as a keyword argument to the
 `qml.device` PennyLane function (see example).
 
 **Examples**
@@ -57,7 +57,7 @@ circuit()
 ```python
 import pennylane as qml
 
-dev = qml.device('orquestra.qiskit', wires=3, backend_device='statevector_simulator', analytic=True, keep_files=True)
+dev = qml.device('orquestra.qiskit', wires=3, backend='statevector_simulator', analytic=True, keep_files=True)
 
 @qml.qnode(dev)
 def circuit():

@@ -22,12 +22,12 @@ class QeQiskitDevice(OrquestraDevice):
     qe_module_name = "qeqiskit.simulator"
     qe_function_name = "QiskitSimulator"
 
-    def __init__(self, wires, shots=1024, backend_device="qasm_simulator", **kwargs):
-        if backend_device =="qasm_simulator":
+    def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
+        if backend =="qasm_simulator":
             if "analytic" in kwargs and kwargs["analytic"]:
                 # Raise a warning if the analytic attribute was set to True
                 warnings.warn("The qasm_simulator backend device cannot be used in "
                         "analytic mode. Results are based on sampling.")
 
             kwargs["analytic"] = False
-        super().__init__(wires, backend_device=backend_device, shots=shots, **kwargs)
+        super().__init__(wires, backend=backend, shots=shots, **kwargs)

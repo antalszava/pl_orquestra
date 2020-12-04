@@ -146,7 +146,7 @@ class TestOrquestraIntegration:
         layers = 1
         weights = qml.init.strong_ent_layers_uniform(layers, qubits)
 
-        dev1 = qml.device("orquestra.qiskit", backend_device="statevector_simulator", wires=qubits, analytic=True, keep_files=True)
+        dev1 = qml.device("orquestra.qiskit", backend="statevector_simulator", wires=qubits, analytic=True, keep_files=True)
         dev2 = qml.device("default.qubit", wires=qubits, analytic=True)
 
         def func(weights):

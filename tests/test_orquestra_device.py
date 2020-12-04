@@ -45,7 +45,7 @@ class TestBaseDevice:
         sampling mode."""
         with pytest.warns(Warning, match="The qasm_simulator backend device cannot be used in "
                     "analytic mode. Results are based on sampling."):
-            dev = qml.device('orquestra.qiskit', backend_device='qasm_simulator', wires=2, analytic=True)
+            dev = qml.device('orquestra.qiskit', backend='qasm_simulator', wires=2, analytic=True)
 
         assert not dev.analytic
 
@@ -217,13 +217,13 @@ class TestCreateBackendSpecs:
 
     def test_backend_specs_analytic(self):
         """Test that the backend specs are created well for an analytic device"""
-        dev = qml.device("orquestra.qiskit", backend_device="statevector_simulator", wires=1, analytic=True)
+        dev = qml.device("orquestra.qiskit", backend="statevector_simulator", wires=1, analytic=True)
         assert dev.backend_specs == qiskit_analytic_specs
 
     @pytest.mark.parametrize("backend", [QeQiskitDevice])
     def test_backend_specs_sampling(self, backend):
         """Test that the backend specs are created well for a sampling device"""
-        dev = qml.device("orquestra.qiskit", backend_device="statevector_simulator", wires=1,  shots=1000, analytic=False)
+        dev = qml.device("orquestra.qiskit", backend="statevector_simulator", wires=1,  shots=1000, analytic=False)
         assert dev.backend_specs == qiskit_sampler_specs
 
 class TestSerializeCircuit:
@@ -232,7 +232,7 @@ class TestSerializeCircuit:
     def test_serialize_circuit_rotations(self):
         """Test that a circuit that is serialized correctly with rotations for
         a remote hardware backend"""
-        dev = QeQiskitDevice(wires=1, shots=1000, backend_device='qasm_simulator', analytic=False)
+        dev = QeQiskitDevice(wires=1, shots=1000, backend='qasm_simulator', analytic=False)
 
         def circuit():
             qml.Hadamard(wires=[0])
@@ -248,7 +248,7 @@ class TestSerializeCircuit:
     def test_serialize_circuit_no_rotations(self):
         """Test that a circuit that is serialized correctly without rotations for
         a simulator backend"""
-        dev = QeQiskitDevice(wires=1, shots=1000, backend_device="statevector_simulator", analytic=True)
+        dev = QeQiskitDevice(wires=1, shots=1000, backend="statevector_simulator", analytic=True)
 
         def circuit():
             qml.Hadamard(wires=[0])
@@ -305,7 +305,7 @@ class TestSerializeOperator:
     def test_pauliz_operator_string(self, wires, expected):
         """Test that an operator is serialized correctly on a device with
         consecutive integer wires."""
-        dev = QeQiskitDevice(wires=3, shots=1000, backend_device='qasm_simulator', analytic=False)
+        dev = QeQiskitDevice(wires=3, shots=1000, backend='qasm_simulator', analytic=False)
         op_str = dev.pauliz_operator_string(wires)
         assert op_str == expected
 
@@ -313,7 +313,7 @@ class TestSerializeOperator:
     def test_qubit_operator_consec_int_wires(self, obs, expected):
         """Test that an operator is serialized correctly on a device with
         consecutive integer wires."""
-        dev = QeQiskitDevice(wires=3, shots=1000, backend_device='qasm_simulator', analytic=False)
+        dev = QeQiskitDevice(wires=3, shots=1000, backend='qasm_simulator', analytic=False)
         op_str = dev.qubit_operator_string(obs)
         assert op_str == expected
 
@@ -321,7 +321,7 @@ class TestSerializeOperator:
     def test_qubit_operator_custom_labels(self, obs, expected):
         """Test that an operator is serialized correctly on a device with
         custom wire labels."""
-        dev = QeQiskitDevice(wires=['a','b','c'], shots=1000, backend_device='qasm_simulator', analytic=False)
+        dev = QeQiskitDevice(wires=['a','b','c'], shots=1000, backend='qasm_simulator', analytic=False)
         op_str = dev.qubit_operator_string(obs)
         assert op_str == expected
 
@@ -329,7 +329,7 @@ class TestSerializeOperator:
     def test_serialize_operator_needs_rotation(self, obs, expected):
         """Test that a device that needs to include rotations serializes the
         operators correctly."""
-        dev = QeQiskitDevice(wires=3, shots=1000, backend_device='qasm_simulator', analytic=False)
+        dev = QeQiskitDevice(wires=3, shots=1000, backend='qasm_simulator', analytic=False)
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
 
@@ -337,7 +337,7 @@ class TestSerializeOperator:
     def test_serialize_operator_no_rot(self, obs, expected):
         """Test that a device that does not need to include rotations
         serializes the operators with consecutive integer wires correctly."""
-        dev = QeQiskitDevice(wires=3, backend_device='statevector_simulator', analytic=True)
+        dev = QeQiskitDevice(wires=3, backend='statevector_simulator', analytic=True)
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
 
@@ -345,7 +345,7 @@ class TestSerializeOperator:
     def test_serialize_operator_no_rot_custom_labels(self, obs, expected):
         """Test that a device that does not need to include rotations
         serializes the operators with custom labels correctly."""
-        dev = QeQiskitDevice(wires=['a','b','c'], backend_device='statevector_simulator', analytic=True)
+        dev = QeQiskitDevice(wires=['a','b','c'], backend='statevector_simulator', analytic=True)
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
 
@@ -356,7 +356,7 @@ class TestSerializeOperator:
         This test is meant to check that the internal wire mappings do not
         introduce false positive behaviour when using custom wire labels.
         """
-        dev = QeQiskitDevice(wires=['a','b','c'], shots=1000, backend_device='qasm_simulator', analytic=False)
+        dev = QeQiskitDevice(wires=['a','b','c'], shots=1000, backend='qasm_simulator', analytic=False)
 
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)

@@ -54,7 +54,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             these quantities.
 
     Keyword Args:
-        backend_device=None (str): the Orquestra backend device to use for the
+        backend=None (str): the Orquestra backend device to use for the
             specific Orquestra backend, if applicable
         batch_size=10 (int): the size of each circuit batch when using the
             ``~.batch_execute`` method to send multiple workflows
@@ -104,7 +104,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # TODO: allow noise_model and device_connectivity options
 
-        self.backend_device = kwargs.get('backend_device', None)
+        self.backend = kwargs.get('backend', None)
         self._batch_size = kwargs.get("batch_size", 10)
         self._keep_files = kwargs.get("keep_files", False)
         self._timeout = kwargs.get("timeout", 300)
@@ -149,10 +149,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         backend_specs["module_name"] = self.qe_module_name
         backend_specs["function_name"] = self.qe_function_name
 
-        if self.backend_device is not None:
-            # Only backends that have multiple backend_device need to specify one
+        if self.backend is not None:
+            # Only backends that have multiple backend need to specify one
             # E.g., qe-qiskit
-            backend_specs["device_name"] = self.backend_device
+            backend_specs["device_name"] = self.backend
 
         if not self.analytic:
             backend_specs["n_samples"] = self.shots
