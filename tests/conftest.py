@@ -1,6 +1,5 @@
 """
-Test data and auxiliary functions used for testing the PennyLane-Orquestra
-plugin.
+Data and auxiliary functions used for testing the PennyLane-Orquestra plugin.
 """
 import subprocess
 from copy import deepcopy
