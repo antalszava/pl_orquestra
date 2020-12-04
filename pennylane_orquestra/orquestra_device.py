@@ -1,3 +1,4 @@
+# pylint: disable=protected-access, consider-using-enumerate
 """
 Base device class for PennyLane-Orquestra.
 """
@@ -5,20 +6,17 @@ import abc
 import json
 import uuid
 import re
-import appdirs
 
-import numpy as np
-
-from pennylane import QubitDevice, DeviceError
-from pennylane.operation import Sample, Variance, Expectation, Probability, State, Tensor
-from pennylane.ops import QubitStateVector, BasisState, CRZ, PhaseShift, Identity
+from pennylane import QubitDevice
+from pennylane.operation import Expectation, Tensor
+from pennylane.ops import Identity
 from pennylane.wires import Wires
 from pennylane.utils import decompose_hamiltonian
 
-from . import __version__
-from .utils import _terms_to_qubit_operator_string
-from .gen_workflow import gen_expval_workflow
-from .cli_actions import qe_submit, loop_until_finished, write_workflow_file
+from pennylane_orquestra._version import __version__
+from pennylane_orquestra.utils import _terms_to_qubit_operator_string
+from pennylane_orquestra.gen_workflow import gen_expval_workflow
+from pennylane_orquestra.cli_actions import qe_submit, loop_until_finished, write_workflow_file
 
 
 class OrquestraDevice(QubitDevice, abc.ABC):
@@ -261,8 +259,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             list[array[float]]: list of measured value(s) for the batch
         """
         for circuit in circuits:
-            obs = circuit.observables
-
             # Input checks
             not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
             if not_all_expval:
@@ -330,7 +326,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Due to parallel execution, results might have been written in any order
         # Sort the results by the step name
         get_step_name = lambda entry: entry[1]["expval"]["stepName"]
-        data = {k: v for k, v in sorted(data.items(), key=get_step_name)}
+        data = dict(sorted(data.items(), key=get_step_name))
 
         # There are multiple steps
         result_dicts = [v for k, v in data.items()]
@@ -347,7 +343,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         return results
 
-    def insert_identity_res_batch(self, results, empty_ops_list, identity_indices):
+    @staticmethod
+    def insert_identity_res_batch(results, empty_ops_list, identity_indices):
         """An auxiliary function for inserting values which were not computed
         using workflows into batch results.
 
@@ -393,6 +390,24 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             list: the workflow filenames
         """
         return self._filenames
+
+    @property
+    def qe_module_name(self):
+        """Device specific Orquestra module name used in the backend
+        specification."""
+        raise NotImplementedError
+
+    @property
+    def qe_function_name(self):
+        """Device specific Orquestra function name used in the backend
+        specification."""
+        raise NotImplementedError
+
+    @property
+    def qe_component(self):
+        """Device specific Orquestra component name used in the backend
+        specification."""
+        raise NotImplementedError
 
     def serialize_circuit(self, circuit):
         """Serializes the circuit before submission according to the backend
@@ -532,7 +547,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             # This removes information about the wire labels used
             coeffs, obs_list = decompose_hamiltonian(observable.matrix)
 
-            inverted_wire_map = {idx: v for idx, v in enumerate(self.wires)}
+            inverted_wire_map = dict(enumerate(self.wires))
             for idx in range(len(obs_list)):
                 obs = obs_list[idx]
 
