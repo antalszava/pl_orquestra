@@ -4,6 +4,7 @@ Orquestra.
 """
 import pytest
 import subprocess
+import os
 
 import yaml
 import pennylane_orquestra.gen_workflow as gw
@@ -28,14 +29,16 @@ class TestCLIFunctions:
             with pytest.raises(ValueError, match=no_success_msg):
                 workflow_id = qe_submit("some_filename")
 
-    def test_submit_raises_unexpected_resp(self, monkeypatch):
+    @pytest.mark.parametrize("response", [["Test Success"], "Test Success"])
+    def test_submit_raises_unexpected_resp(self, monkeypatch, response):
         """Test that the qe_submit method raises an error if the workflow id
         could not be obtained."""
 
         unexp_resp_msg = "Received an unexpected response after submitting workflow."
         with monkeypatch.context() as m:
             # Disable submitting to the Orquestra platform by mocking Popen
-            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen(unexp_resp_msg))
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen(response))
+            m.setattr(os, "remove", lambda *args, **kwargs: None)
 
             with pytest.raises(ValueError, match=unexp_resp_msg):
                 workflow_id = qe_submit("some_filename")
