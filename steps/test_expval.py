@@ -27,6 +27,9 @@ sampling_devices = [
     '{"module_name": "qequlacs.simulator", "function_name": "QulacsSimulator", "n_samples": 10000}',
 ]
 
+analytic_tol = 10e-10
+
+# The tolerance for sampling is expected to be higher
 tol = 10e-2
 
 
@@ -63,7 +66,7 @@ class TestExpvalExact:
         monkeypatch.setattr(expval, "save_list", lambda val, name: lst.append(val))
 
         expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, op)
-        assert math.isclose(lst[0][0], 0.0, abs_tol=tol)
+        assert math.isclose(lst[0][0], 0.0, abs_tol=analytic_tol)
 
 
 @pytest.mark.parametrize("backend_specs", sampling_devices)
