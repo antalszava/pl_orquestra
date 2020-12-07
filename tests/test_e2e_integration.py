@@ -156,6 +156,12 @@ class TestOrquestraIntegration:
 
         There are ``qubits * layers * 3 * 2`` many circuits to evaluate.
         """
+        try_resp = qe_list_workflow()
+        need_login_msg = "token has expired, please log in again\n"
+
+        if need_login_msg in try_resp:
+            pytest.skip("Has not logged in to the Orquestra platform.")
+
         qml.enable_tape()
 
         # Evaluate 12 circuits (2 * 1 * 3 * 2)
