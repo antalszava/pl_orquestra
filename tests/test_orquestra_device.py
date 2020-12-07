@@ -20,6 +20,7 @@ from conftest import (
 
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "statevector_simulator", "n_samples": 1000}'
+ibmq_specs = '{"module_name": "qeqiskit.backend", "function_name": "QiskitBackend", "device_name": "ibmq_qasm_simulator", "n_samples": 1000, "api_token": "Some token"}'
 
 
 class TestBaseDevice:
@@ -267,14 +268,18 @@ class TestCreateBackendSpecs:
         )
         assert dev.backend_specs == qiskit_analytic_specs
 
-    @pytest.mark.parametrize("backend", [QeQiskitDevice])
-    def test_backend_specs_sampling(self, backend):
+    def test_backend_specs_sampling(self):
         """Test that the backend specs are created well for a sampling device"""
         dev = qml.device(
             "orquestra.qiskit", backend="statevector_simulator", wires=1, shots=1000, analytic=False
         )
         assert dev.backend_specs == qiskit_sampler_specs
 
+    def test_backend_specs_ibmq(self):
+        dev = qml.device(
+            "orquestra.ibmq", wires=1, analytic=False, shots=1000, ibmqx_token="Some token"
+        )
+        assert dev.backend_specs == ibmq_specs
 
 class TestSerializeCircuit:
     """Test the serialize_circuit function"""
