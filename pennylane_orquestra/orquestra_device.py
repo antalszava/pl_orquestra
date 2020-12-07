@@ -276,16 +276,16 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # 2. Create the qubit operators of observables for each circuit
         ops = []
         identity_indices = {}
-        empty_ops_list = []
+        empty_obs_list = []
 
         for idx, circuit in enumerate(circuits):
-            this_ops, this_indices = self.process_observables(circuit.observables)
-            ops.append(this_ops)
-            if not ops:
-                # Keep track of empty operation lists
-                empty_ops_list.append(idx)
+            processed_observables, current_id_indices = self.process_observables(circuit.observables)
+            ops.append(processed_observables)
+            if not processed_observables:
+                # Keep track of empty observable lists
+                empty_obs_list.append(idx)
 
-            identity_indices[idx] = this_indices
+            identity_indices[idx] = current_id_indices
 
         if not all(ops):
             # There were batches which had only identity observables
@@ -338,13 +338,13 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             extracted_results = [res_dict["list"] for res_dict in res_step]
             results.append(extracted_results)
 
-        results = self.insert_identity_res_batch(results, empty_ops_list, identity_indices)
+        results = self.insert_identity_res_batch(results, empty_obs_list, identity_indices)
         results = [self._asarray(res) for res in results]
 
         return results
 
     @staticmethod
-    def insert_identity_res_batch(results, empty_ops_list, identity_indices):
+    def insert_identity_res_batch(results, empty_obs_list, identity_indices):
         """An auxiliary function for inserting values which were not computed
         using workflows into batch results.
 
@@ -354,7 +354,8 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         Args:
             results (list): workflow results of the batched execution
-            empty_ops_list (list): list of indices where every operation was identity
+            empty_obs_list (list): list of indices where every observable was
+                identity
             identity_indices (dict): maps the index of a sublist to the
                 the list of indices where the observable was an identity
 
@@ -362,7 +363,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
             list: list of results
         """
         # Insert the lists needed for only identity results
-        for idx in empty_ops_list:
+        for idx in empty_obs_list:
             results.insert(idx, [])
 
         # Insert further identity results
@@ -392,22 +393,22 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         return self._filenames
 
     @property
+    @abc.abstractmethod
     def qe_module_name(self):
         """Device specific Orquestra module name used in the backend
         specification."""
-        raise NotImplementedError
 
     @property
+    @abc.abstractmethod
     def qe_function_name(self):
         """Device specific Orquestra function name used in the backend
         specification."""
-        raise NotImplementedError
 
     @property
+    @abc.abstractmethod
     def qe_component(self):
         """Device specific Orquestra component name used in the backend
         specification."""
-        raise NotImplementedError
 
     def serialize_circuit(self, circuit):
         """Serializes the circuit before submission according to the backend

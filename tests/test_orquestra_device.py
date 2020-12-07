@@ -107,6 +107,7 @@ class TestBaseDevice:
             file_kept = os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
             assert file_kept if keep else not file_kept
             assert dev.filenames == ([f"expval-{test_uuid}.yaml"] if keep else [])
+            assert dev.latest_id == "SomeWorkflowID"
 
     @pytest.mark.parametrize("timeout", [1, 2.5])
     def test_timeout(self, timeout, tmpdir, monkeypatch):
@@ -532,6 +533,86 @@ class TestExecute:
 class TestBatchExecute:
     """Test the integration of the device with PennyLane."""
 
+    def test_error_if_not_expval_batched(self):
+        """Test that an error is raised if not an expectation value is
+        computed during batched execution"""
+        qml.enable_tape()
+        dev = qml.device("orquestra.qiskit", wires=2)
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.expval(qml.PauliZ(wires=[0]))
+            qml.var(qml.PauliZ(wires=[0]))
+
+        with qml.tape.QuantumTape() as tape2:
+            qml.expval(qml.PauliZ(wires=[0]))
+
+        circuits = [tape1, tape2]
+        with pytest.raises(NotImplementedError):
+            res = dev.batch_execute(circuits)
+
+        qml.disable_tape()
+
+    @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
+    def test_identity_single_batched(self, dev):
+        """Test computing the expectation value of the identity for a single return value."""
+        qml.enable_tape()
+        dev = qml.device(dev, wires=1)
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.expval(qml.Identity(wires=[0]))
+
+        res = dev.batch_execute([tape1])
+        assert len(res) == 1
+        assert np.allclose(res[0], np.array([1]))
+        qml.disable_tape()
+
+    @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
+    def test_identity_mixed(self, dev, monkeypatch, tmpdir):
+        """Test computing that computing the expectation value of a tape with
+        observables of identity and PauliZ and a tape where only the identity
+        of observable returns the correct list of results."""
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(
+                pennylane_orquestra.orquestra_device,
+                "loop_until_finished",
+                lambda *args, **kwargs: test_result, # The exact results are not considered in the test
+            )
+
+
+            dev = qml.device(dev, wires=2)
+
+            with qml.tape.QuantumTape() as tape1:
+                qml.expval(qml.Identity(wires=[0]))
+                qml.expval(qml.PauliZ(wires=[1]))
+
+            with qml.tape.QuantumTape() as tape2:
+                qml.expval(qml.Identity(wires=[0]))
+
+            res = dev.batch_execute([tape1, tape2])
+
+            assert np.allclose(res[0], np.array([1, test_batch_res0]))
+            assert np.allclose(res[1], np.array([1]))
+
+    @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
+    def test_identity_multiple_batched(self, dev):
+        """Test computing the expectation value of the identity for multiple
+        return values."""
+        qml.enable_tape()
+        dev = qml.device(dev, wires=2)
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.expval(qml.Identity(wires=[0]))
+            qml.expval(qml.Identity(wires=[1]))
+
+        res = dev.batch_execute([tape1])
+        assert len(res) == 1
+        assert np.allclose(res[0], np.array([1, 1]))
+        qml.disable_tape()
+
     @pytest.mark.parametrize("keep", [True, False])
     def test_batch_exec(self, keep, tmpdir, monkeypatch):
         """Test that the batch_execute method returns the desired result and
@@ -542,8 +623,6 @@ class TestBatchExecute:
         dev = qml.device("orquestra.forest", wires=3, keep_files=keep)
 
         with qml.tape.QuantumTape() as tape1:
-            qml.RX(0.133, wires=1)
-            qml.CNOT(wires=[0, 1])
             qml.expval(qml.PauliZ(wires=[0]))
 
         with qml.tape.QuantumTape() as tape2:
