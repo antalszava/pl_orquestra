@@ -13,8 +13,9 @@ help:
 	@echo "  dist               to package the source distribution"
 	@echo "  clean              to delete all temporary, cache, and build files"
 	@echo "  clean-docs         to delete all built documentation"
-	@echo "  test               to run the test suite"
-	@echo "  coverage           to generate a coverage report"
+	@echo "  test               to run the unit tests without connecting to Orquestra"
+	@echo "  test-e2e           to run the end-to-end tests that connect to Orquestra"
+	@echo "  coverage           to generate a coverage report based on the unit tests"
 
 .PHONY: install
 install:
