@@ -279,7 +279,9 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         empty_obs_list = []
 
         for idx, circuit in enumerate(circuits):
-            processed_observables, current_id_indices = self.process_observables(circuit.observables)
+            processed_observables, current_id_indices = self.process_observables(
+                circuit.observables
+            )
             ops.append(processed_observables)
             if not processed_observables:
                 # Keep track of empty observable lists

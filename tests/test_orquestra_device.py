@@ -122,9 +122,7 @@ class TestBaseDevice:
         assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
-            m.setattr(
-                pennylane_orquestra.cli_actions, "workflow_results", lambda *args: "Test res"
-            )
+            m.setattr(pennylane_orquestra.cli_actions, "workflow_results", lambda *args: "Test res")
 
             # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
@@ -179,9 +177,8 @@ class TestBaseDevice:
             m.setattr(
                 pennylane_orquestra.orquestra_device,
                 "loop_until_finished",
-                lambda *args, **kwargs: test_result, # The exact results are not considered in the test
+                lambda *args, **kwargs: test_result,  # The exact results are not considered in the test
             )
-
 
             dev = qml.device(dev, wires=2)
 
@@ -257,7 +254,9 @@ class TestBaseDevice:
             get_resources_passed = lambda *args, **kwargs: recorder.append(
                 kwargs.get("resources", False)
             )
-            m.setattr(pennylane_orquestra.orquestra_device, "gen_expval_workflow", get_resources_passed)
+            m.setattr(
+                pennylane_orquestra.orquestra_device, "gen_expval_workflow", get_resources_passed
+            )
 
             # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
@@ -302,6 +301,7 @@ class TestCreateBackendSpecs:
         )
         assert dev.backend_specs == ibmq_specs
 
+
 class TestSerializeCircuit:
     """Test the serialize_circuit function"""
 
@@ -336,6 +336,7 @@ class TestSerializeCircuit:
         qasm = dev.serialize_circuit(qnode.circuit)
         expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\n'
         assert qasm == expected
+
 
 mx = np.diag(np.array([1, 2, 3, 4]))
 
@@ -463,6 +464,7 @@ class TestSerializeOperator:
             ):
                 circuit()
 
+
 class TestExecute:
     """Tests for the execute method of the base OrquestraDevice class."""
 
@@ -480,16 +482,20 @@ class TestExecute:
 
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
-            m.setattr(pennylane_orquestra.orquestra_device, "gen_expval_workflow",
-                    lambda component, backend_specs, circuits, operators,
-                    **kwargs: circuit_history.extend(circuits))
+            m.setattr(
+                pennylane_orquestra.orquestra_device,
+                "gen_expval_workflow",
+                lambda component, backend_specs, circuits, operators, **kwargs: circuit_history.extend(
+                    circuits
+                ),
+            )
 
             # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(
                 pennylane_orquestra.orquestra_device,
                 "loop_until_finished",
-                lambda *args, **kwargs: test_batch_result, # The exact results are not considered in the test
+                lambda *args, **kwargs: test_batch_result,  # The exact results are not considered in the test
             )
 
             dev.execute(tape1)
@@ -512,16 +518,20 @@ class TestExecute:
 
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
-            m.setattr(pennylane_orquestra.orquestra_device, "gen_expval_workflow",
-                    lambda component, backend_specs, circuits, operators,
-                    **kwargs: circuit_history.extend(circuits))
+            m.setattr(
+                pennylane_orquestra.orquestra_device,
+                "gen_expval_workflow",
+                lambda component, backend_specs, circuits, operators, **kwargs: circuit_history.extend(
+                    circuits
+                ),
+            )
 
             # Disable submitting to the Orquestra platform by mocking Popen
             m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
             m.setattr(
                 pennylane_orquestra.orquestra_device,
                 "loop_until_finished",
-                lambda *args, **kwargs: test_batch_result, # The exact results are not considered in the test
+                lambda *args, **kwargs: test_batch_result,  # The exact results are not considered in the test
             )
 
             dev.execute(tape1)
@@ -529,6 +539,7 @@ class TestExecute:
         expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\n'
         assert circuit_history[0] == expected
         qml.disable_tape()
+
 
 class TestBatchExecute:
     """Test the integration of the device with PennyLane."""
@@ -579,9 +590,8 @@ class TestBatchExecute:
             m.setattr(
                 pennylane_orquestra.orquestra_device,
                 "loop_until_finished",
-                lambda *args, **kwargs: test_result, # The exact results are not considered in the test
+                lambda *args, **kwargs: test_result,  # The exact results are not considered in the test
             )
-
 
             dev = qml.device(dev, wires=2)
 

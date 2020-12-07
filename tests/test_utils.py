@@ -47,11 +47,12 @@ class TestUtils:
                     {k: v for k, v in custom_wires.items()}, n_wires
                 )
 
-
     def test_process_wires_raises(self):
         """Test if exceptions are raised for _wire_proc()"""
 
-        with pytest.raises(ValueError, match="Expected only int-keyed or consecutive int-valued dict"):
+        with pytest.raises(
+            ValueError, match="Expected only int-keyed or consecutive int-valued dict"
+        ):
             utils._process_wires({"a": "b"})
 
         with pytest.raises(ValueError, match="Expected type Wires, list, tuple, or dict"):
@@ -112,7 +113,7 @@ class TestUtils:
     def test_error_terms_to_qubit_operator_wires_do_not_cover(self):
         """Test that an error is raised if there are missing wires from the
         wire map passed to the _terms_to_qubit_operator_string function."""
-        wire_map = {0: 0} # Missing mapping for wire 1
+        wire_map = {0: 0}  # Missing mapping for wire 1
         with pytest.raises(
             ValueError,
             match="Supplied `wires` does not cover all wires defined in `ops`.",
@@ -123,7 +124,7 @@ class TestUtils:
                     qml.operation.Tensor(qml.PauliX(0)),
                     qml.operation.Tensor(qml.PauliZ(0), qml.QuadOperator(0.1, wires=1)),
                 ],
-            wires=wire_map
+                wires=wire_map,
             )
 
     def test_identities_terms_to_qubit_operator(self):

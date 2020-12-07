@@ -82,7 +82,9 @@ class TestWorkflowSubmissionIntegration:
         operator = []
 
         # Fill in workflow template
-        workflow = gw.gen_expval_workflow(backend_component, backend_specs_default, circuits, operator)
+        workflow = gw.gen_expval_workflow(
+            backend_component, backend_specs_default, circuits, operator
+        )
         file_name = tmpdir.join("test_workflow.yaml")
 
         with open(file_name, "w") as file:

@@ -30,10 +30,14 @@ class MockPopen:
 
             def readlines(self, *args):
                 if self.msg is None:
-                    self.msg = ["Successfully submitted workflow to quantum engine!\n", "SomeWorkflowID"]
+                    self.msg = [
+                        "Successfully submitted workflow to quantum engine!\n",
+                        "SomeWorkflowID",
+                    ]
                 return self.msg
 
         self.stdout = MockStdOut(msg)
+
 
 @pytest.fixture(
     scope="module",
@@ -49,6 +53,7 @@ class MockPopen:
 def custom_wires(request):
     """Custom wire mapping for Pennylane<->OpenFermion conversion"""
     return request.param
+
 
 # Auxiliary data
 
