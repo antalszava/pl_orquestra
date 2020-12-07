@@ -115,7 +115,7 @@ class TestBaseDevice:
         with monkeypatch.context() as m:
             m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
             m.setattr(
-                pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: "Test res"
+                pennylane_orquestra.cli_actions, "workflow_results", lambda *args: "Test res"
             )
 
             # Disable submitting to the Orquestra platform by mocking Popen

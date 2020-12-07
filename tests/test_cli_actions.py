@@ -72,7 +72,7 @@ class TestCLIFunctions:
                 pennylane_orquestra.cli_actions, "workflow_details", lambda *args: "Some message1"
             )
             m.setattr(
-                pennylane_orquestra.cli_actions, "get_workflow_results", lambda *args: res_msg
+                pennylane_orquestra.cli_actions, "workflow_results", lambda *args: res_msg
             )
 
             # Check that indexing into the message raises an IndexError
@@ -93,7 +93,7 @@ class TestCLIFunctions:
             m.setattr(pennylane_orquestra.cli_actions, "workflow_details", lambda *args: status)
             m.setattr(
                 pennylane_orquestra.cli_actions,
-                "get_workflow_results",
+                "workflow_results",
                 lambda *args: result_message,
             )
 

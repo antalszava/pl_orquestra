@@ -28,7 +28,7 @@ class MockPopen:
 
             def readlines(self, *args):
                 if self.msg is None:
-                    self.msg = "Successfully submitted workflow to quantum engine!\n"
+                    self.msg = ["Successfully submitted workflow to quantum engine!\n", "SomeWorkflow ID"]
                 return self.msg
 
         self.stdout = MockStdOut(msg)

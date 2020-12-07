@@ -92,7 +92,7 @@ def workflow_details(workflow_id):
     return qe_get(workflow_id, option="workflow")
 
 
-def get_workflow_results(workflow_id):
+def workflow_results(workflow_id):
     """Function for getting workflow results via a CLI call.
 
     Args:
@@ -178,7 +178,7 @@ def loop_until_finished(workflow_id, timeout=300):
             if "Failed" in details_string:
                 raise ValueError(f"Something went wrong with executing the workflow. {status}")
 
-        results = get_workflow_results(workflow_id)
+        results = workflow_results(workflow_id)
 
         # 1. Attempt to extract a location
         try:
