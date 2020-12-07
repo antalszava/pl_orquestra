@@ -191,7 +191,7 @@ def loop_until_finished(workflow_id, timeout=300):
         # 2. Check that the location is a valid URL
         try:
 
-            # We expect that this fails if no valid URL location was outputted
+            # We expect that this fails if an invalid URL location was outputted
             url = urllib.request.urlopen(location)
 
             # If we managed to get the URL, we can stop querying
