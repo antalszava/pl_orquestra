@@ -239,3 +239,30 @@ test_batch_result = {
         "workflowId": "expval",
     },
 }
+
+test_result = {
+    "expval-id000": {
+        "class": step_name0,
+        "expval": {
+            "id": "expval-id/expval",
+            "list": [
+                {
+                    "id": "expval-id",
+                    "list": test_batch_res0,
+                    "parentId": "expval-id",
+                    "parentType": "test",
+                    "workflowId": "expval-id",
+                    "test": 0,
+                }
+            ],
+            "schema": "test",
+            "stepId": "expval",
+            "stepName": "run-circuit-and-get-expval-0",
+            "taskClass": "run-circuit-and-get-expval-0",
+            "taskId": "expval",
+            "workflowId": "expval",
+        },
+        "id": "expval",
+        "workflowId": "expval",
+    }
+}

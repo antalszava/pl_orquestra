@@ -10,6 +10,7 @@ import pennylane.tape
 import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
 from conftest import (
+    test_result,
     test_batch_res0,
     test_batch_res1,
     test_batch_res2,
@@ -65,6 +66,12 @@ class TestBaseDevice:
         tokens specified."""
         with pytest.raises(ValueError, match="Please pass a valid IBMQX token"):
             dev = qml.device("orquestra.ibmq", wires=2, analytic=False)
+
+    def test_empty_apply(self):
+        """Test that calling the empty apply method returns None."""
+        dev = qml.device("orquestra.qiskit", wires=2, analytic=False)
+
+        assert dev.apply([]) is None
 
     @pytest.mark.parametrize("keep", [True, False])
     def test_keep_workflow_file(self, keep, tmpdir, monkeypatch):
@@ -160,19 +167,32 @@ class TestBaseDevice:
         assert np.allclose(circuit(), np.ones(2))
 
     @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
-    def test_identity_single(self, dev):
-        """Test computing the expectation value of the identity for a single return value."""
-        dev = qml.device(dev, wires=1)
+    def test_identity_mixed(self, dev, monkeypatch, tmpdir):
+        """Test computing that computing the expectation value of the identity
+        and PauliZ returns an array of results."""
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
 
-        @qml.qnode(dev)
-        def circuit():
-            qml.PauliX(0)
-            return qml.expval(qml.Identity(0))
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(
+                pennylane_orquestra.orquestra_device,
+                "loop_until_finished",
+                lambda *args, **kwargs: test_result, # The exact results are not considered in the test
+            )
 
-        assert circuit() == 1
+
+            dev = qml.device(dev, wires=2)
+
+            @qml.qnode(dev)
+            def circuit():
+                qml.PauliX(0)
+                return qml.expval(qml.Identity(0)), qml.expval(qml.PauliZ(1))
+
+            assert np.allclose(circuit(), np.array([1, test_batch_res0]))
 
     @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
-    def test_identity_multiple(self, dev, tmpdir, monkeypatch):
+    def test_identity_multiple_tape(self, dev, tmpdir, monkeypatch):
         """Test computing the expectation value of the identity for multiple
         return values."""
         qml.enable_tape()
@@ -220,7 +240,7 @@ class TestBaseDevice:
             for r, e in zip(res, expected):
                 assert np.allclose(r, e)
 
-            qml.disable_tape()
+        qml.disable_tape()
 
     @pytest.mark.parametrize("resources", [None, resources_default])
     def test_got_resources(self, resources, monkeypatch):
@@ -315,7 +335,6 @@ class TestSerializeCircuit:
         qasm = dev.serialize_circuit(qnode.circuit)
         expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\n'
         assert qasm == expected
-
 
 mx = np.diag(np.array([1, 2, 3, 4]))
 
@@ -443,6 +462,72 @@ class TestSerializeOperator:
             ):
                 circuit()
 
+class TestExecute:
+    """Tests for the execute method of the base OrquestraDevice class."""
+
+    def test_serialize_circuit_rotations_tape(self, monkeypatch, tmpdir):
+        """Test that a circuit that is serialized correctly with rotations for
+        a remote hardware backend in tape mode"""
+        qml.enable_tape()
+        dev = QeQiskitDevice(wires=1, shots=1000, backend="qasm_simulator", analytic=False)
+
+        circuit_history = []
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.Hadamard(wires=[0])
+            qml.expval(qml.Hadamard(0))
+
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+            m.setattr(pennylane_orquestra.orquestra_device, "gen_expval_workflow",
+                    lambda component, backend_specs, circuits, operators,
+                    **kwargs: circuit_history.extend(circuits))
+
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(
+                pennylane_orquestra.orquestra_device,
+                "loop_until_finished",
+                lambda *args, **kwargs: test_batch_result, # The exact results are not considered in the test
+            )
+
+            dev.execute(tape1)
+
+        expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\nry(-0.7853981633974483) q[0];\n'
+        assert circuit_history[0] == expected
+        qml.disable_tape()
+
+    def test_serialize_circuit_no_rotations_tape(self, monkeypatch, tmpdir):
+        """Test that a circuit that is serialized correctly without rotations for
+        a simulator backend in tape mode"""
+        qml.enable_tape()
+        dev = QeQiskitDevice(wires=1, shots=1000, backend="statevector_simulator", analytic=True)
+
+        circuit_history = []
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.Hadamard(wires=[0])
+            qml.expval(qml.Hadamard(0))
+
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+            m.setattr(pennylane_orquestra.orquestra_device, "gen_expval_workflow",
+                    lambda component, backend_specs, circuits, operators,
+                    **kwargs: circuit_history.extend(circuits))
+
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(
+                pennylane_orquestra.orquestra_device,
+                "loop_until_finished",
+                lambda *args, **kwargs: test_batch_result, # The exact results are not considered in the test
+            )
+
+            dev.execute(tape1)
+
+        expected = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[1];\ncreg c[1];\nh q[0];\n'
+        assert circuit_history[0] == expected
+        qml.disable_tape()
 
 class TestBatchExecute:
     """Test the integration of the device with PennyLane."""
