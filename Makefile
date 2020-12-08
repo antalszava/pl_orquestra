@@ -3,6 +3,7 @@ PYTHON3 := $(shell which python3 2>/dev/null)
 PYTHON := python3
 COVERAGE := --cov=pennylane_orquestra --cov-report term-missing --cov-report=html:coverage_html_report
 TESTRUNNER := -m pytest tests --tb=native --no-flaky-report
+TESTRUNNERSTEPS := -m pytest steps/test_* --tb=native --no-flaky-report
 PLUGIN_TESTRUNNER := pl-device-test --skip-ops --tb=native --no-flaky-report
 
 .PHONY: help
@@ -57,6 +58,13 @@ test-e2e:
 	$(PYTHON) $(TESTRUNNER) -k 'e2e'
 	$(PLUGIN_TESTRUNNER) --device=orquestra.qiskit
 
+test-steps:
+	$(PYTHON) $(TESTRUNNERSTEPS)
+
 coverage:
 	@echo "Generating coverage report..."
 	$(PYTHON) $(TESTRUNNER) $(COVERAGE) -k 'not e2e'
+
+coverage-steps:
+	@echo "Generating coverage report for the steps..."
+	$(PYTHON) $(TESTRUNNERSTEPS) --cov=steps --cov-report term-missing --cov-report=html:coverage_html_report

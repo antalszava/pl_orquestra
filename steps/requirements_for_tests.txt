@@ -10,3 +10,4 @@ git+https://github.com/zapatacomputing/qe-openfermion#dev
 pytest
 pytest-cov
 pytest-mock
+flaky
