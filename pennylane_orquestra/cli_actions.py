@@ -157,7 +157,6 @@ def loop_until_finished(workflow_id, timeout=300):
     start = time.time()
     query_results = True
     tries = 0
-    url = None
     while query_results:
         tries += 1
 
@@ -193,7 +192,7 @@ def loop_until_finished(workflow_id, timeout=300):
         try:
 
             # We expect that this fails if an invalid URL location was outputted
-            url = urllib.request.urlopen(location)
+            urllib.request.urlopen(location)
 
             # If we managed to get the URL, we can stop querying
             query_results = False
