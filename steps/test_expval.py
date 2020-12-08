@@ -98,20 +98,20 @@ class TestExpvalSampling:
         """Test that the expectation value of the Hadamard is computed
         correctly."""
         n_wires = 2
-    
+
         theta = 0.432
         phi = 0.123
-    
-        dev = qml.device('orquestra.qulacs', wires=2)
+
+        dev = qml.device("orquestra.qulacs", wires=2)
 
         def circuit():
             qml.RY(theta, wires=[0])
             qml.RY(phi, wires=[1])
             qml.CNOT(wires=[0, 1])
             return qml.expval(qml.Hadamard(wires=0)), qml.expval(qml.Hadamard(wires=1))
-    
+
         qnode = qml.QNode(circuit, dev)
-        qnode._construct([],{})
+        qnode._construct([], {})
         qasm_circuit = dev.serialize_circuit(qnode.circuit)
         ops, _ = dev.process_observables(qnode.circuit.observables)
         ops = json.dumps(ops)
