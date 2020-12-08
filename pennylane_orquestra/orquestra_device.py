@@ -215,10 +215,7 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         data = loop_until_finished(workflow_id, timeout=self._timeout)
 
         # Assume that there's only one step
-        list_of_result_dicts = [v for k, v in data.items()][0]["expval"]["list"]
-
-        # Obtain the value for each operator
-        results = [res_dict["list"] for res_dict in list_of_result_dicts]
+        results = [v for k, v in data.items()][0]["expval"]["list"]
 
         # Insert the theoretical value for the expectation value of the
         # identity operator
@@ -327,18 +324,13 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         # Due to parallel execution, results might have been written in any order
         # Sort the results by the step name
-        get_step_name = lambda entry: entry[1]["expval"]["stepName"]
+        get_step_name = lambda entry: entry[1]["stepName"]
         data = dict(sorted(data.items(), key=get_step_name))
 
         # There are multiple steps
-        result_dicts = [v for k, v in data.items()]
-        list_of_result_dicts = [dct["expval"]["list"] for dct in result_dicts]
-
         # Obtain the results for each step
-        results = []
-        for res_step in list_of_result_dicts:
-            extracted_results = [res_dict["list"] for res_dict in res_step]
-            results.append(extracted_results)
+        result_dicts = [v for k, v in data.items()]
+        results = [dct["expval"]["list"] for dct in result_dicts]
 
         results = self.insert_identity_res_batch(results, empty_obs_list, identity_indices)
         results = [self._asarray(res) for res in results]

@@ -10,11 +10,9 @@ import pennylane.tape
 import pennylane_orquestra
 from pennylane_orquestra import OrquestraDevice, QeQiskitDevice, QeIBMQDevice
 from conftest import (
-    test_result,
     test_batch_res0,
     test_batch_res1,
     test_batch_res2,
-    test_batch_result,
     resources_default,
     MockPopen,
 )
@@ -79,7 +77,7 @@ class TestBaseDevice:
 
         file_name = "test_workflow.yaml"
         dev = qml.device("orquestra.forest", wires=3, keep_files=keep)
-        mock_res_dict = {"First": {"expval": {"list": [{"list": 123456789}]}}}
+        mock_res_dict = {"First": {"expval": {"list": [123456789]}}}
         test_uuid = "1234"
 
         assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
@@ -115,7 +113,7 @@ class TestBaseDevice:
 
         file_name = "test_workflow.yaml"
         dev = qml.device("orquestra.forest", wires=3, timeout=timeout)
-        mock_res_dict = {"First": {"expval": {"list": [{"list": 123456789}]}}}
+        mock_res_dict = {"First": {"expval": {"list": [123456789]}}}
 
         test_uuid = "1234"
         assert dev._timeout == timeout
@@ -166,7 +164,7 @@ class TestBaseDevice:
         assert np.allclose(circuit(), np.ones(2))
 
     @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
-    def test_identity_mixed(self, dev, monkeypatch, tmpdir):
+    def test_identity_mixed(self, dev, monkeypatch, tmpdir, test_result):
         """Test computing that computing the expectation value of the identity
         and PauliZ returns an array of results."""
         with monkeypatch.context() as m:
@@ -187,7 +185,8 @@ class TestBaseDevice:
                 qml.PauliX(0)
                 return qml.expval(qml.Identity(0)), qml.expval(qml.PauliZ(1))
 
-            assert np.allclose(circuit(), np.array([1, test_batch_res0]))
+            res = circuit()
+            assert np.allclose(res, np.array([1, test_batch_res0]))
 
     @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
     def test_identity_multiple_tape(self, dev, tmpdir, monkeypatch):
@@ -246,7 +245,7 @@ class TestBaseDevice:
         are passed to generate the workflow."""
         dev = qml.device("orquestra.qiskit", wires=2, resources=resources)
         recorder = []
-        mock_res_dict = {"First": {"expval": {"list": [{"list": 123456789}]}}}
+        mock_res_dict = {"First": {"expval": {"list": [123456789]}}}
 
         with monkeypatch.context() as m:
 
@@ -432,7 +431,7 @@ class TestSerializeOperator:
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
 
-    def test_operator_with_invalid_wire(self, monkeypatch):
+    def test_operator_with_invalid_wire(self, monkeypatch, test_batch_result):
         """Test that a device with custom wire labels raises an error when an
         invalid wire is used in the operator definition.
 
@@ -468,7 +467,7 @@ class TestSerializeOperator:
 class TestExecute:
     """Tests for the execute method of the base OrquestraDevice class."""
 
-    def test_serialize_circuit_rotations_tape(self, monkeypatch, tmpdir):
+    def test_serialize_circuit_rotations_tape(self, monkeypatch, tmpdir, test_batch_result):
         """Test that a circuit that is serialized correctly with rotations for
         a remote hardware backend in tape mode"""
         qml.enable_tape()
@@ -504,7 +503,7 @@ class TestExecute:
         assert circuit_history[0] == expected
         qml.disable_tape()
 
-    def test_serialize_circuit_no_rotations_tape(self, monkeypatch, tmpdir):
+    def test_serialize_circuit_no_rotations_tape(self, monkeypatch, tmpdir, test_batch_result):
         """Test that a circuit that is serialized correctly without rotations for
         a simulator backend in tape mode"""
         qml.enable_tape()
@@ -578,7 +577,7 @@ class TestBatchExecute:
         qml.disable_tape()
 
     @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
-    def test_identity_mixed(self, dev, monkeypatch, tmpdir):
+    def test_identity_mixed(self, dev, monkeypatch, tmpdir, test_result):
         """Test computing that computing the expectation value of a tape with
         observables of identity and PauliZ and a tape where only the identity
         of observable returns the correct list of results."""
@@ -624,7 +623,7 @@ class TestBatchExecute:
         qml.disable_tape()
 
     @pytest.mark.parametrize("keep", [True, False])
-    def test_batch_exec(self, keep, tmpdir, monkeypatch):
+    def test_batch_exec(self, keep, tmpdir, monkeypatch, test_batch_result):
         """Test that the batch_execute method returns the desired result and
         that the result preserves the order in which circuits were
         submitted."""
@@ -679,7 +678,9 @@ class TestBatchExecute:
     @pytest.mark.parametrize(
         "dev_name", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"]
     )
-    def test_batch_exec_multiple_workflow(self, keep, dev_name, tmpdir, monkeypatch):
+    def test_batch_exec_multiple_workflow(
+        self, keep, dev_name, tmpdir, monkeypatch, test_batch_result
+    ):
         """Test that the batch_execute method returns the desired result and
         that the result preserves the order in which circuits were submitted
         when batches are created in multiple workflows ."""

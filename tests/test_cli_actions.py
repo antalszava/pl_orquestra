@@ -4,6 +4,7 @@ Orquestra.
 """
 import pytest
 import subprocess
+import tarfile
 import os
 import urllib.request
 import json
@@ -119,29 +120,22 @@ class TestCLIFunctions:
             ):
                 loop_until_finished("Some ID", timeout=1)
 
-    def test_valid_url(self, monkeypatch):
+    def test_valid_url(self, monkeypatch, tmpdir):
         """Test that when receiving a valid url, data will be decoded and
         returned."""
-        decoded_data = "Decoded Data"
+        decoded_data = {"res": "Decoded Data"}
+        test_file = os.path.join(tmpdir, "workflow_result.json")
+        test_tar = os.path.join(tmpdir, "test.tgz")
 
-        class MockDecodableObj:
-            """A mock class that can be decoded."""
+        with open(test_file, "w") as outfile:
+            json.dump(decoded_data, outfile)
 
-            def decode(self):
-                return decoded_data
+        tar = tarfile.open(test_tar, mode="w:gz")
+        tar.add(test_tar)
+        tar.close()
 
-        class MockURL:
-            """A mock class for URLs that can serve as a context manager."""
-
-            def __enter__(self):
-                pass
-
-            def __exit__(self, *args):
-                pass
-
-            def read(self):
-                return MockDecodableObj()
-
+        # Change to the test directory
+        os.chdir(tmpdir)
         with monkeypatch.context() as m:
             status = "Status:              Failed\n"
             result_message = ["Some message2", "Some location"]
@@ -149,12 +143,8 @@ class TestCLIFunctions:
             m.setattr(
                 pennylane_orquestra.cli_actions, "workflow_results", lambda *args: result_message
             )
-            m.setattr(urllib.request, "urlopen", lambda *args: MockURL())
-            m.setattr(
-                json,
-                "loads",
-                lambda arg: arg,
-            )
+            m.setattr(urllib.request, "urlopen", lambda arg: arg)
+            m.setattr(urllib.request, "urlretrieve", lambda *args, **kwargs: (test_tar,))
             assert loop_until_finished("Some ID", timeout=1) == decoded_data
 
     def test_invalid_url_loop_till_timeout(self, monkeypatch):

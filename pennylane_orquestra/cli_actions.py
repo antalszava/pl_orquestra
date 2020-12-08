@@ -7,6 +7,7 @@ import time
 import os
 import urllib.request
 import json
+import tarfile
 
 import yaml
 from appdirs import user_data_dir
@@ -201,7 +202,15 @@ def loop_until_finished(workflow_id, timeout=300):
             continue
 
     # 3. Obtain the data from the URL
-    with url:
-        data = json.loads(url.read().decode())
+    # Seting filename=None will treat the file as temporary and it will be
+    # removed
+    file_tmp = urllib.request.urlretrieve(location, filename=None)[0]
+    if tarfile.is_tarfile(file_tmp):
+        tar = tarfile.open(file_tmp, "r:gz")
+        tar.extractall()
+        tar.close()
+
+        with open("workflow_result.json") as json_file:
+            data = json.load(json_file)
 
     return data
