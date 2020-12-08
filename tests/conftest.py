@@ -4,6 +4,7 @@ Data and auxiliary functions used for testing the PennyLane-Orquestra plugin.
 import subprocess
 import pytest
 import os
+import textwrap
 import pennylane as qml
 from copy import deepcopy
 
@@ -252,3 +253,31 @@ def token():
         pytest.skip("Skipping test, no IBMQ token available")
 
     return t
+
+@pytest.fixture
+def test_noise_model_yaml():
+    noise_yaml = """\
+        name: run-circuit-and-get-expval-noise-model
+        config:
+          runtime:
+            language: python3
+            imports:
+            - z-quantum-core
+            - qe-openfermion
+            - qe-qiskit
+            parameters:
+              file: qe-qiskit/steps/noise.py
+              function: get_qiskit_noise_model
+        outputs:
+        - name: noise-model
+          type: noise-model
+        - name: device-connectivity
+          type: device-connectivity
+        inputs:
+        - device_name: ibmqx2
+        - api_token: SomeToken
+        - hub: SomeHub
+        - group: SomeGroup
+        - project: SomeProject
+        """
+    return textwrap.dedent(noise_yaml)

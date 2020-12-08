@@ -17,12 +17,6 @@ qiskit_import = {
     "parameters": {"repository": "git@github.com:zapatacomputing/qe-qiskit.git", "branch": "dev"},
 }
 
-qhipster_import = {
-    "name": "qe-qhipster",
-    "type": "git",
-    "parameters": {"repository": "git@github.com:zapatacomputing/qe-qhipster.git", "branch": "dev"},
-}
-
 qulacs_import = {
     "name": "qe-qulacs",
     "type": "git",
@@ -31,13 +25,11 @@ qulacs_import = {
 
 backend_import_db = {
     "qe-forest": forest_import,
-    "qe-qhipster": qhipster_import,
     "qe-qiskit": qiskit_import,
     "qe-qulacs": qulacs_import,
 }
 
-
-def step_dictionary(name_suffix):
+def step_dict(name_suffix):
     """Creates a new step with a pre-defined name suffixed with the name
     passed.
 
@@ -73,6 +65,55 @@ def step_dictionary(name_suffix):
 
     return step_dict
 
+def noise_step_dict(
+    device_name, api_token, hub=None, group=None, project=None
+):
+    """Creates a new step that obtains the defined noise-model.
+    
+    Args:
+        device_name (string): The name of the Qiskit device to get the noise
+            model for
+        api_token (string): The IBMQ api token
+    
+    Keyword arguments:
+        hub=None (string): The IBMQ hub
+        group=None (string): The IBMQ group
+        project=None (string): The IBMQ project
+
+    Returns:
+        dict: a dictionary containing data for a noise step
+    """
+    noise_dict = step_dict("noise-model")
+    noise_parameters = {
+            "file": "qe-qiskit/steps/noise.py",
+            "function": "get_qiskit_noise_model"
+            }
+
+    # No need to import PennyLane-Orquestra for this step
+    del noise_dict["config"]["runtime"]["imports"][0]
+
+    # Insert the Qiskit component name
+    noise_dict["config"]["runtime"]["imports"].append("qe-qiskit")
+
+    # Re-define the parameters for running the correct function
+    noise_dict["config"]["runtime"]["parameters"] = noise_parameters
+
+    noise_dict["inputs"] = []
+
+    noise_dict["inputs"].append({"device_name": device_name})
+    noise_dict["inputs"].append({"api_token": api_token})
+
+    if hub is not None:
+        noise_dict["inputs"].append({"hub": hub})
+    if group is not None:
+        noise_dict["inputs"].append({"group": group})
+    if project is not None:
+        noise_dict["inputs"].append({"project": project})
+
+    noise_model_out = {"name": "noise-model", "type": "noise-model"}
+    connectivity_out = {"name": "device-connectivity", "type": "device-connectivity"}
+    noise_dict["outputs"] = [noise_model_out, connectivity_out]
+    return noise_dict
 
 def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs):
     """Workflow template for computing the expectation value of operators
@@ -152,7 +193,7 @@ def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs)
     resources = kwargs.get("resources", None)
 
     for idx, (circ, ops) in enumerate(zip(circuits, operators)):
-        new_step = step_dictionary(str(idx))
+        new_step = step_dict(str(idx))
         expval_template["steps"].append(new_step)
 
         if resources is not None:

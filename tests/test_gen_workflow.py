@@ -48,6 +48,11 @@ class TestExpvalTemplate:
                 operator_string_default,
             )
 
+    def test_noise_step_dict(self, test_noise_model_yaml):
+        """Test the step dictionary that is created for the noise model."""
+        noise_step = gw.noise_step_dict("ibmqx2", "SomeToken", hub="SomeHub", group="SomeGroup", project="SomeProject")
+        assert yaml.dump(noise_step, sort_keys=False) == test_noise_model_yaml
+
     @pytest.mark.parametrize(
         "resources, test_wf", [(None, test_workflow), (resources_default, test_workflow_resources)]
     )
