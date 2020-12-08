@@ -3,6 +3,7 @@ Data and auxiliary functions used for testing the PennyLane-Orquestra plugin.
 """
 import subprocess
 import pytest
+import os
 import pennylane as qml
 from copy import deepcopy
 
@@ -241,3 +242,13 @@ def test_result():
     }
 
     return test_res
+
+@pytest.fixture
+def token():
+    """Get the IBMQX token from an environment variable."""
+    t = os.getenv("IBMQX_TOKEN_TEST", None)
+
+    if t is None:
+        pytest.skip("Skipping test, no IBMQ token available")
+
+    return t

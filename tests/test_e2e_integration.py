@@ -30,6 +30,10 @@ from conftest import (
 qiskit_analytic_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator"}'
 qiskit_sampler_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 1000}'
 
+analytic_tol = 10e-10
+
+# The tolerance for sampling is expected to be higher
+tol = 10e-2
 
 class TestWorkflowSubmissionIntegration:
     """Test that workflow generation works as expected."""
@@ -110,7 +114,9 @@ class TestOrquestraIntegration:
     @pytest.mark.parametrize("device_name,backend,analytic", devices)
     def test_apply_hadamard(self, device_name, backend, analytic):
         """Test a simple circuit that applies Hadamard on the first wire."""
-        dev = qml.device(device_name, wires=3, backend_name=backend, analytic=analytic)
+        dev = qml.device(device_name, wires=3, backend=backend, analytic=analytic, keep_files=True)
+
+        TOL = analytic_tol if dev.analytic else tol
 
         # Skip if not logged in to Orquestra
         try_resp = qe_list_workflow()
@@ -124,7 +130,7 @@ class TestOrquestraIntegration:
             qml.Hadamard(0)
             return qml.expval(qml.PauliZ(0))
 
-        assert math.isclose(circuit(), -1, abs_tol=1e-05)
+        assert math.isclose(circuit(), 0, abs_tol=TOL)
 
     def test_compute_expval_including_identity(self):
         """Test a simple circuit that involves computing the expectation value of the
@@ -197,21 +203,11 @@ class TestOrquestraIntegration:
         assert np.allclose(res_orquestra, res_default_qubit)
         qml.disable_tape()
 
-
-@pytest.fixture
-def token():
-    """Get the IBMQX token from an environment variable."""
-    t = os.getenv("IBMQX_TOKEN_TEST", None)
-
-    if t is None:
-        pytest.skip("Skipping test, no IBMQ token available")
-
-    return t
-
-
 class TestOrquestraIBMQIntegration:
     def test_apply_x(self, token):
         """Test a simple circuit that applies PauliX on the first wire."""
+        TOL = tol
+
         dev = qml.device("orquestra.ibmq", wires=3, ibmqx_token=token)
 
         # Skip if not logged in to Orquestra
@@ -226,4 +222,4 @@ class TestOrquestraIBMQIntegration:
             qml.PauliX(0)
             return qml.expval(qml.PauliZ(0))
 
-        assert math.isclose(circuit(), -1, abs_tol=10e-5)
+        assert math.isclose(circuit(), -1, abs_tol=TOL)
