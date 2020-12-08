@@ -80,12 +80,12 @@ class TestExpvalTemplate:
             == test_wf["steps"][0]["inputs"][0]["backend_specs"]
         )
         assert (
-            workflow["steps"][0]["inputs"][3]["operators"]
-            == test_wf["steps"][0]["inputs"][3]["operators"]
+            workflow["steps"][0]["inputs"][1]["operators"]
+            == test_wf["steps"][0]["inputs"][1]["operators"]
         )
         assert (
-            workflow["steps"][0]["inputs"][4]["circuit"]
-            == test_wf["steps"][0]["inputs"][4]["circuit"]
+            workflow["steps"][0]["inputs"][2]["circuit"]
+            == test_wf["steps"][0]["inputs"][2]["circuit"]
         )
         assert workflow["steps"][0]["inputs"] == test_wf["steps"][0]["inputs"]
 
@@ -103,12 +103,12 @@ class TestExpvalTemplate:
             == test_wf["steps"][1]["inputs"][0]["backend_specs"]
         )
         assert (
-            workflow["steps"][1]["inputs"][3]["operators"]
-            == test_wf["steps"][1]["inputs"][3]["operators"]
+            workflow["steps"][1]["inputs"][1]["operators"]
+            == test_wf["steps"][1]["inputs"][1]["operators"]
         )
         assert (
-            workflow["steps"][1]["inputs"][4]["circuit"]
-            == test_wf["steps"][1]["inputs"][4]["circuit"]
+            workflow["steps"][1]["inputs"][2]["circuit"]
+            == test_wf["steps"][1]["inputs"][2]["circuit"]
         )
         assert workflow["steps"][1]["inputs"] == test_wf["steps"][1]["inputs"]
 
