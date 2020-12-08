@@ -10,6 +10,7 @@ import pytest
 from qiskit import IBMQ
 
 import expval
+from qeqiskit.noise import get_qiskit_noise_model
 
 exact_devices = [
     '{"module_name": "qeforest.simulator", "function_name": "ForestSimulator", "device_name": "wavefunction-simulator"}',
@@ -121,3 +122,22 @@ class TestIBMQ:
 
         expval.run_circuit_and_get_expval(backend_specs, simple_qasm, op)
         assert math.isclose(lst[0][0], 1.0, abs_tol=tol)
+
+class TestNoiseModel:
+
+    def test_run_circuit_and_get_expval_hadamard_noise(self, monkeypatch, token):
+        """Tests that the correct result in obtained for a circuit that
+        contains a Hadamard gate and is run on a noisy device."""
+        lst = []
+
+        backend_specs = '{"module_name": "qeqiskit.simulator", "function_name": "QiskitSimulator", "device_name": "qasm_simulator", "n_samples": 10000}'
+        hadamard_qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[2];\ncreg c[2];\nh q[0];\n'
+        op = '["[Z0]"]'
+
+        monkeypatch.setattr(expval, "save_list", lambda val, name: lst.append(val))
+        monkeypatch.setattr(expval, "load_noise_model", lambda arg: arg)
+        monkeypatch.setattr(expval, "load_circuit_connectivity", lambda arg: arg)
+
+        noise_model, connectivity = get_qiskit_noise_model("ibmqx2", api_token=token)
+        expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, op, noise_model=noise_model, device_connectivity=connectivity)
+        assert math.isclose(lst[0][0], 0.0, abs_tol=tol)
