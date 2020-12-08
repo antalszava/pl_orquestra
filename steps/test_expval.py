@@ -5,9 +5,12 @@ be installed locally.
 """
 import math
 import os
+import json
+import numpy as np
 
 import pytest
 from qiskit import IBMQ
+import pennylane as qml
 
 import expval
 
@@ -90,6 +93,38 @@ class TestExpvalSampling:
 
         expval.run_circuit_and_get_expval(backend_specs, hadamard_qasm, op)
         assert math.isclose(lst[0][0], 0.0, abs_tol=tol)
+
+    def test_hadamard_expectation(self, backend_specs, monkeypatch):
+        """Test that the expectation value of the Hadamard is computed
+        correctly."""
+        n_wires = 2
+    
+        theta = 0.432
+        phi = 0.123
+    
+        dev = qml.device('orquestra.qulacs', wires=2)
+
+        def circuit():
+            qml.RY(theta, wires=[0])
+            qml.RY(phi, wires=[1])
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.Hadamard(wires=0)), qml.expval(qml.Hadamard(wires=1))
+    
+        qnode = qml.QNode(circuit, dev)
+        qnode._construct([],{})
+        qasm_circuit = dev.serialize_circuit(qnode.circuit)
+        ops, _ = dev.process_observables(qnode.circuit.observables)
+        ops = json.dumps(ops)
+
+        lst = []
+
+        monkeypatch.setattr(expval, "save_list", lambda val, name: lst.append(val))
+        expval.run_circuit_and_get_expval(dev.backend_specs, qasm_circuit, ops)
+        expected = np.array(
+            [np.sin(theta) * np.sin(phi) + np.cos(theta), np.cos(theta) * np.cos(phi) + np.sin(phi)]
+        ) / np.sqrt(2)
+
+        assert np.allclose(lst[0], expected, atol=analytic_tol)
 
 
 @pytest.fixture

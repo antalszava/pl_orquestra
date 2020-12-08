@@ -375,6 +375,14 @@ serialize_needs_rot = [
     (qml.PauliY(0) @ qml.PauliX(1) @ qml.PauliY(2), "[Z0 Z1 Z2]"),
 ]
 
+# More advanced examples for testing the correct wires
+obs_decomposed_wires_check = [
+    (qml.Hadamard(0), '0.7071067811865475 [X0] + 0.7071067811865475 [Z0]'),
+    (qml.Hadamard(2), '0.7071067811865475 [X2] + 0.7071067811865475 [Z2]'),
+    (qml.Hadamard(2) @ qml.Hadamard(1), '0.4999999999999999 [X2 X1] + 0.4999999999999999 [X2 Z1] + 0.4999999999999999 [Z2 X1] + 0.4999999999999999 [Z2 Z1]'),
+    (qml.Hermitian((qml.PauliY(1) @ qml.PauliX(0) @ qml.PauliZ(2)).matrix, wires=[1,0,2]), '1.0 [Y1 X0 Z2]'),
+    (qml.PauliY(2) @ qml.Hermitian((qml.PauliX(1)).matrix, wires=[1]), '1.0 [Y2 X1]')
+]
 
 class TestSerializeOperator:
     """Test the serialize_operator function"""
@@ -430,6 +438,15 @@ class TestSerializeOperator:
         dev = QeQiskitDevice(wires=["a", "b", "c"], backend="statevector_simulator", analytic=True)
         op_str = dev.serialize_operator(obs)
         assert op_str == expected
+
+    @pytest.mark.parametrize("obs, expected", obs_decomposed_wires_check)
+    def test_decomposed_operator_correct_wires(self, obs, expected):
+        """Test that the serialized form of observables that need decomposition
+        match the correct wires."""
+        dev = qml.device('orquestra.qulacs', wires=3)
+
+        res = dev.serialize_operator(obs)
+        assert res == expected
 
     def test_operator_with_invalid_wire(self, monkeypatch, test_batch_result):
         """Test that a device with custom wire labels raises an error when an

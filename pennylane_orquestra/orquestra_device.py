@@ -536,11 +536,13 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         if need_decomposition:
 
-            # Decompose the matrix of the observable
-            # This removes information about the wire labels used
-            coeffs, obs_list = decompose_hamiltonian(observable.matrix)
+            original_observable = observable
 
-            inverted_wire_map = dict(enumerate(self.wires))
+            # Decompose the matrix of the observable
+            # This removes information about the wire labels used and
+            # consecutive integer wires are used
+            coeffs, obs_list = decompose_hamiltonian(original_observable.matrix)
+
             for idx in range(len(obs_list)):
                 obs = obs_list[idx]
 
@@ -549,11 +551,10 @@ class OrquestraDevice(QubitDevice, abc.ABC):
                     # can be used
                     obs_list[idx] = Tensor(obs)
 
-                # The decomposition involved using consecutive integer wires
-                # Need to use the custom wire labels, use the inverted wire map
-                for o in obs_list[idx].obs:
-                    mapped_wires = [inverted_wire_map[wire] for wire in o.wires.tolist()]
-                    o._wires = Wires(mapped_wires)
+                # Need to use the custom wire labels of the original observable
+                original_wires = original_observable.wires.tolist()
+                for o, mapped_w in zip(obs_list[idx].obs, original_wires):
+                    o._wires = Wires(mapped_w)
 
         else:
             if not isinstance(observable, Tensor):
