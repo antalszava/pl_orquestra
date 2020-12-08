@@ -17,12 +17,6 @@ qiskit_import = {
     "parameters": {"repository": "git@github.com:zapatacomputing/qe-qiskit.git", "branch": "dev"},
 }
 
-qhipster_import = {
-    "name": "qe-qhipster",
-    "type": "git",
-    "parameters": {"repository": "git@github.com:zapatacomputing/qe-qhipster.git", "branch": "dev"},
-}
-
 qulacs_import = {
     "name": "qe-qulacs",
     "type": "git",
@@ -31,7 +25,6 @@ qulacs_import = {
 
 backend_import_db = {
     "qe-forest": forest_import,
-    "qe-qhipster": qhipster_import,
     "qe-qiskit": qiskit_import,
     "qe-qulacs": qulacs_import,
 }
@@ -92,9 +85,6 @@ def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs)
             observables: ``Z0`` and ``Z1``.
 
     Keyword arguments:
-        noise_model='None' (str): the noise model to use
-        device_connectivity='None' (str): the device connectivity of the remote
-            device
         resources=None (str): the machine resources to use for executing the
             workflow
 
@@ -102,12 +92,6 @@ def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs)
         dict: the dictionary that contains the workflow template to be
         submitted to Orquestra
     """
-    # By default Orquestra takes 'None' (needs to be a string)
-    noise_model = "None" if "noise_model" not in kwargs else kwargs["noise_model"]
-    device_connectivity = (
-        "None" if "device_connectivity" not in kwargs else kwargs["device_connectivity"]
-    )
-
     backend_import = backend_import_db.get(component, None)
     if backend_import is None:
         raise ValueError("The specified backend component is not supported.")
@@ -143,7 +127,7 @@ def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs)
             # Place to insert: main backend import
         ],
         "steps": [],
-        "types": ["circuit", "expval", "noise-model", "device-connectivity"],
+        "types": ["circuit", "expval"],
     }
 
     # Insert the backend component to the main imports
@@ -168,12 +152,6 @@ def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs)
             {"backend_specs": backend_specs, "type": "string"}
         )
 
-        expval_template["steps"][idx]["inputs"].append(
-            {"noise_model": noise_model, "type": "noise-model"}
-        )
-        expval_template["steps"][idx]["inputs"].append(
-            {"device_connectivity": device_connectivity, "type": "device-connectivity"}
-        )
         expval_template["steps"][idx]["inputs"].append({"operators": ops, "type": "string"})
 
         expval_template["steps"][idx]["inputs"].append({"circuit": circ, "type": "string"})

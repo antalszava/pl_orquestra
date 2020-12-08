@@ -85,8 +85,6 @@ first_circuit = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[2]; creg c[2]; h q[0
 first_ops = ["[Z0]"]
 first_in = [
     {"backend_specs": first_backend_specs, "type": "string"},
-    {"noise_model": "None", "type": "noise-model"},
-    {"device_connectivity": "None", "type": "device-connectivity"},
     {"operators": first_ops, "type": "string"},
     {"circuit": first_circuit, "type": "string"},
 ]
@@ -112,8 +110,6 @@ second_circuit = 'OPENQASM 2.0; include "qelib1.inc"; qreg q[2]; creg c[2]; h q[
 second_ops = ["[Z0 X1 Y2]"]
 second_in = [
     {"backend_specs": second_backend_specs, "type": "string"},
-    {"noise_model": "None", "type": "noise-model"},
-    {"device_connectivity": "None", "type": "device-connectivity"},
     {"operators": second_ops, "type": "string"},
     {"circuit": second_circuit, "type": "string"},
 ]
@@ -127,7 +123,7 @@ second_step = {
 
 steps = [first_step, second_step]
 
-types = ["circuit", "expval", "noise-model", "device-connectivity"]
+types = ["circuit", "expval"]
 
 pl_orquestra_import = {
     "name": "pl_orquestra",

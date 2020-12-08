@@ -41,10 +41,6 @@ steps:
   inputs:
   - backend_specs: '{"module_name": "qequlacs.simulator", "function_name": "QulacsSimulator"}'
     type: string
-  - noise_model: None
-    type: noise-model
-  - device_connectivity: None
-    type: device-connectivity
   - operators: '["1 [Z0]"]'
     type: string
   - circuit: 'OPENQASM 2.0;
@@ -62,5 +58,3 @@ steps:
 types:
 - circuit
 - expval
-- noise-model
-- device-connectivity

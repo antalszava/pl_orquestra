@@ -101,8 +101,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
     def __init__(self, wires, shots=1000, analytic=True, **kwargs):
         super().__init__(wires=wires, shots=shots, analytic=analytic)
 
-        # TODO: allow noise_model and device_connectivity options
-
         self.backend = kwargs.get("backend", None)
         self._batch_size = kwargs.get("batch_size", 10)
         self._keep_files = kwargs.get("keep_files", False)
