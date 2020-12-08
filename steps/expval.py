@@ -11,9 +11,9 @@ import numpy as np
 from openfermion import IsingOperator, QubitOperator
 from qiskit import QuantumCircuit
 
-from zquantum.core.circuit import Circuit
+from zquantum.core.circuit import Circuit, load_circuit_connectivity
 from zquantum.core.measurement import expectation_values_to_real
-from zquantum.core.utils import create_object, save_list
+from zquantum.core.utils import create_object, save_list, load_noise_model
 
 
 def run_circuit_and_get_expval(
