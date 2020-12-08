@@ -65,6 +65,8 @@ def step_dict(name_suffix):
 
     return step_dict
 
+noise_step_name = "get-qiskit-noise-model"
+
 def noise_step_dict(
     device_name, api_token, hub=None, group=None, project=None
 ):
@@ -83,7 +85,10 @@ def noise_step_dict(
     Returns:
         dict: a dictionary containing data for a noise step
     """
-    noise_dict = step_dict("noise-model")
+    # Rename the step
+    noise_dict = step_dict("")
+    noise_dict["name"] = noise_step_name
+
     noise_parameters = {
             "file": "qe-qiskit/steps/noise.py",
             "function": "get_qiskit_noise_model"
@@ -115,44 +120,13 @@ def noise_step_dict(
     noise_dict["outputs"] = [noise_model_out, connectivity_out]
     return noise_dict
 
-def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs):
-    """Workflow template for computing the expectation value of operators
-    given a quantum circuit and a device backend.
-
-    Args:
-        component (str): the name of the Orquestra component to use
-        backend_specs (str): the Orquestra backend specifications as a json
-            string
-        circuits (list): list of OpenQASM 2.0 programs, each representing a
-            circuit as an input for a workflow step
-        operators (list): A list of json strings, each representing a list of
-            operators as an input for a workflow step. Each operator is a string in
-            an ``openfermion.QubitOperator`` or ``openfermion.IsingOperator``
-            representation. For example, ``['["1 [Z0]", "1 [Z1]"]']`` is an
-            input for a single step that returns the expectation value of two
-            observables: ``Z0`` and ``Z1``.
-
-    Keyword arguments:
-        noise_model='None' (str): the noise model to use
-        device_connectivity='None' (str): the device connectivity of the remote
-            device
-        resources=None (str): the machine resources to use for executing the
-            workflow
-
+def _get_expval_template():
+    """Auxiliary function that produces an Orquestra workflow template for
+    computing expectation values.
+    
     Returns:
-        dict: the dictionary that contains the workflow template to be
-        submitted to Orquestra
+        dict: the workflow template
     """
-    # By default Orquestra takes 'None' (needs to be a string)
-    noise_model = "None" if "noise_model" not in kwargs else kwargs["noise_model"]
-    device_connectivity = (
-        "None" if "device_connectivity" not in kwargs else kwargs["device_connectivity"]
-    )
-
-    backend_import = backend_import_db.get(component, None)
-    if backend_import is None:
-        raise ValueError("The specified backend component is not supported.")
-
     expval_template = {
         "apiVersion": "io.orquestra.workflow/1.0.0",
         "name": "expval",
@@ -186,14 +160,65 @@ def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs)
         "steps": [],
         "types": ["circuit", "expval", "noise-model", "device-connectivity"],
     }
+    return expval_template
+
+def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs):
+    """Workflow template for computing the expectation value of operators
+    given a quantum circuit and a device backend.
+
+    Args:
+        component (str): the name of the Orquestra component to use
+        backend_specs (str): the Orquestra backend specifications as a json
+            string
+        circuits (list): list of OpenQASM 2.0 programs, each representing a
+            circuit as an input for a workflow step
+        operators (list): A list of json strings, each representing a list of
+            operators as an input for a workflow step. Each operator is a string in
+            an ``openfermion.QubitOperator`` or ``openfermion.IsingOperator``
+            representation. For example, ``['["1 [Z0]", "1 [Z1]"]']`` is an
+            input for a single step that returns the expectation value of two
+            observables: ``Z0`` and ``Z1``.
+
+    Keyword arguments:
+        noise_data= (str): the noise model to use
+        resources=None (str): the machine resources to use for executing the
+            workflow
+
+    Returns:
+        dict: the dictionary that contains the workflow template to be
+        submitted to Orquestra
+    """
+    # By default Orquestra takes 'None' (needs to be a string)
+    workflow_with_noise = "noise_data" in kwargs
+    if not workflow_with_noise:
+        noise_model = "None"
+        device_connectivity = "None"
+    else:
+        noise_model = "((run-circuit-and-get-expval-noise-model.noise-model))"
+        device_connectivity = "((run-circuit-and-get-expval-noise-model.device-connectivity))"
+        noise_step = noise_step_dict(**kwargs["noise_data"])
+
+    backend_import = backend_import_db.get(component, None)
+    if backend_import is None:
+        raise ValueError("The specified backend component is not supported.")
+
+    expval_template = _get_expval_template()
 
     # Insert the backend component to the main imports
     expval_template["imports"].append(backend_import)
 
     resources = kwargs.get("resources", None)
 
-    for idx, (circ, ops) in enumerate(zip(circuits, operators)):
+    if workflow_with_noise:
+        expval_template["steps"].append(noise_step)
+
+    for k, (circ, ops) in enumerate(zip(circuits, operators)):
+        # Have to account for the first step which is obtaining the noise model
+        idx = k if not workflow_with_noise else k + 1
         new_step = step_dict(str(idx))
+        if workflow_with_noise:
+            new_step["passed"] = [noise_step_name]
+
         expval_template["steps"].append(new_step)
 
         if resources is not None:

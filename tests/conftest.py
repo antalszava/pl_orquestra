@@ -172,6 +172,8 @@ test_workflow = {
     "types": types,
 }
 
+# Test workflow with resource definitions 
+
 test_workflow_resources = deepcopy(test_workflow)
 test_workflow_resources["steps"][0]["config"]["resources"] = resources_default
 test_workflow_resources["steps"][1]["config"]["resources"] = resources_default
@@ -254,10 +256,23 @@ def token():
 
     return t
 
+test_noise_step = {'name': 'get-qiskit-noise-model', 'config': {'runtime': {'language': 'python3', 'imports': ['z-quantum-core', 'qe-openfermion', 'qe-qiskit'], 'parameters': {'file': 'qe-qiskit/steps/noise.py', 'function': 'get_qiskit_noise_model'}}}, 'outputs': [{'name': 'noise-model', 'type': 'noise-model'}, {'name': 'device-connectivity', 'type': 'device-connectivity'}], 'inputs': [{'device_name': 'ibmqx2'}, {'api_token': 'SomeToken'}, {'hub': 'SomeHub'}, {'group': 'SomeGroup'}, {'project': 'SomeProject'}]}
+
+# Test workflow with noise model
+# TODO: need to insert passed statement, update noise and connectivity params
+steps_with_noise = [test_noise_step, first_step, second_step]
+test_workflow_with_noise = {
+    "apiVersion": "io.orquestra.workflow/1.0.0",
+    "name": "expval",
+    "imports": imports_workflow,
+    "steps": steps_with_noise,
+    "types": types,
+}
+
 @pytest.fixture
 def test_noise_model_yaml():
     noise_yaml = """\
-        name: run-circuit-and-get-expval-noise-model
+        name: get-qiskit-noise-model
         config:
           runtime:
             language: python3
