@@ -56,7 +56,6 @@ test:
 
 test-e2e:
 	$(PYTHON) $(TESTRUNNER) -k 'e2e'
-	$(PLUGIN_TESTRUNNER) --device=orquestra.qiskit
 
 test-steps:
 	$(PYTHON) $(TESTRUNNERSTEPS)
