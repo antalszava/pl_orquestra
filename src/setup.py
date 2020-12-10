@@ -7,7 +7,7 @@ with open(readme_path, "r") as f:
 
 
 setuptools.setup(	
-    name="pl_orquestra",	
+    name="pennylane_orquestra_steps",
     version="0.0.1",	
     author="Antal Szava",	
     author_email="antalszava@gmail.com",	
