@@ -26,7 +26,8 @@ info = {
     },
     'description': 'PennyLane is a Python quantum machine learning library by Xanadu Inc.',
     'long_description': open('README.md').read(),
-    'long_description_content_type': 'text/x-rst',
+    # TODO: update content type when adding docs
+    'long_description_content_type': 'text/markdown',
     'provides': ['pennylane'],
     'install_requires': requirements,
     'package_dir': {
