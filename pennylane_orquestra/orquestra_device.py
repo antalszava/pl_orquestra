@@ -224,117 +224,6 @@ class OrquestraDevice(QubitDevice, abc.ABC):
 
         return res
 
-    def batch_execute(self, circuits, **kwargs):
-        results = []
-        idx = 0
-        file_prefix = f"{str(uuid.uuid4())}"
-
-        # Iterating through the circuits based on the allowed number of
-        # circuits per workflow
-        while idx < len(circuits):
-            end_idx = idx + self._batch_size
-            batch = circuits[idx:end_idx]
-            file_id = f"{file_prefix}-{str(idx)}"
-
-            res = self._batch_execute(batch, file_id, **kwargs)
-
-            results.extend(res)
-            idx += self._batch_size
-
-        return results
-
-    def _batch_execute(self, circuits, file_id, **kwargs):
-        """Creates a multi-step workflow for executing a batch of circuits.
-
-        Args:
-            circuits (list[QuantumTape]): circuits to execute on the device
-            file_id (str): the file id to be used for naming the workflow file
-
-        Returns:
-            list[array[float]]: list of measured value(s) for the batch
-        """
-        for circuit in circuits:
-            # Input checks
-            not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
-            if not_all_expval:
-                raise NotImplementedError(
-                    f"The {self.short_name} device only supports returning expectation values."
-                )
-
-            self.check_validity(circuit.operations, circuit.observables)
-
-        # 1. Create qasm strings from the circuits
-        # Extract the CircuitGraph object from QuantumTape
-        circuits = [circ.graph for circ in circuits]
-        qasm_circuits = [self.serialize_circuit(circuit) for circuit in circuits]
-
-        # 2. Create the qubit operators of observables for each circuit
-        ops = []
-        identity_indices = {}
-        empty_obs_list = []
-
-        for idx, circuit in enumerate(circuits):
-            processed_observables, current_id_indices = self.process_observables(
-                circuit.observables
-            )
-            ops.append(processed_observables)
-            if not processed_observables:
-                # Keep track of empty observable lists
-                empty_obs_list.append(idx)
-
-            identity_indices[idx] = current_id_indices
-
-        if not all(ops):
-            # There were batches which had only identity observables
-
-            if not any(ops):
-                # All the batches only had identity observables, no workflow submission needed
-                return [self._asarray([1] * len(circuit.observables)) for circuit in circuits]
-
-            # Remove the empty lists so that those are not submitted
-            ops = [o for o in ops if o]
-
-        # Multiple steps: need to create json strings as elements of the list
-        ops = [json.dumps(o) for o in ops]
-
-        # 3-4. Create the backend specs & workflow file
-        workflow = gen_expval_workflow(
-            self.qe_component,
-            self.backend_specs,
-            qasm_circuits,
-            ops,
-            resources=self._resources,
-            **kwargs,
-        )
-
-        filename = f"expval-{file_id}.yaml"
-        filepath = write_workflow_file(filename, workflow)
-
-        # 5. Submit the workflow
-        workflow_id = qe_submit(filepath, keep_file=self._keep_files)
-        self._latest_id = workflow_id
-
-        if self._keep_files:
-            self._filenames.append(filename)
-
-        # 6. Loop until finished
-        data = loop_until_finished(workflow_id, timeout=self._timeout)
-
-        # Due to parallel execution, results might have been written in any order
-        # Sort the results by the step name
-        get_step_name = lambda entry: entry[1]["stepName"]
-        data = dict(sorted(data.items(), key=get_step_name))
-
-        # There are multiple steps
-        # Obtain the results for each step
-        result_dicts = [v for k, v in data.items()]
-        results = [dct["expval"]["list"] for dct in result_dicts]
-
-        results = self.insert_identity_res_batch(results, empty_obs_list, identity_indices)
-        results = [self._asarray(res) for res in results]
-
-        return results
-
     @staticmethod
     def insert_identity_res_batch(results, empty_obs_list, identity_indices):
         """An auxiliary function for inserting values which were not computed
@@ -568,3 +457,114 @@ class OrquestraDevice(QubitDevice, abc.ABC):
         # Use consecutive integers as default wire_map
         wire_map = {v: idx for idx, v in enumerate(self.wires)}
         return _terms_to_qubit_operator_string(coeffs, obs_list, wires=wire_map)
+
+    def batch_execute(self, circuits, **kwargs):
+        results = []
+        idx = 0
+        file_prefix = f"{str(uuid.uuid4())}"
+
+        # Iterating through the circuits based on the allowed number of
+        # circuits per workflow
+        while idx < len(circuits):
+            end_idx = idx + self._batch_size
+            batch = circuits[idx:end_idx]
+            file_id = f"{file_prefix}-{str(idx)}"
+
+            res = self._batch_execute(batch, file_id, **kwargs)
+
+            results.extend(res)
+            idx += self._batch_size
+
+        return results
+
+    def _batch_execute(self, circuits, file_id, **kwargs):
+        """Creates a multi-step workflow for executing a batch of circuits.
+
+        Args:
+            circuits (list[QuantumTape]): circuits to execute on the device
+            file_id (str): the file id to be used for naming the workflow file
+
+        Returns:
+            list[array[float]]: list of measured value(s) for the batch
+        """
+        for circuit in circuits:
+            # Input checks
+            not_all_expval = any(obs.return_type is not Expectation for obs in circuit.observables)
+            if not_all_expval:
+                raise NotImplementedError(
+                    f"The {self.short_name} device only supports returning expectation values."
+                )
+
+            self.check_validity(circuit.operations, circuit.observables)
+
+        # 1. Create qasm strings from the circuits
+        # Extract the CircuitGraph object from QuantumTape
+        circuits = [circ.graph for circ in circuits]
+        qasm_circuits = [self.serialize_circuit(circuit) for circuit in circuits]
+
+        # 2. Create the qubit operators of observables for each circuit
+        ops = []
+        identity_indices = {}
+        empty_obs_list = []
+
+        for idx, circuit in enumerate(circuits):
+            processed_observables, current_id_indices = self.process_observables(
+                circuit.observables
+            )
+            ops.append(processed_observables)
+            if not processed_observables:
+                # Keep track of empty observable lists
+                empty_obs_list.append(idx)
+
+            identity_indices[idx] = current_id_indices
+
+        if not all(ops):
+            # There were batches which had only identity observables
+
+            if not any(ops):
+                # All the batches only had identity observables, no workflow submission needed
+                return [self._asarray([1] * len(circuit.observables)) for circuit in circuits]
+
+            # Remove the empty lists so that those are not submitted
+            ops = [o for o in ops if o]
+
+        # Multiple steps: need to create json strings as elements of the list
+        ops = [json.dumps(o) for o in ops]
+
+        # 3-4. Create the backend specs & workflow file
+        workflow = gen_expval_workflow(
+            self.qe_component,
+            self.backend_specs,
+            qasm_circuits,
+            ops,
+            resources=self._resources,
+            **kwargs,
+        )
+
+        filename = f"expval-{file_id}.yaml"
+        filepath = write_workflow_file(filename, workflow)
+
+        # 5. Submit the workflow
+        workflow_id = qe_submit(filepath, keep_file=self._keep_files)
+        self._latest_id = workflow_id
+
+        if self._keep_files:
+            self._filenames.append(filename)
+
+        # 6. Loop until finished
+        data = loop_until_finished(workflow_id, timeout=self._timeout)
+
+        # Due to parallel execution, results might have been written in any order
+        # Sort the results by the step name
+        get_step_name = lambda entry: entry[1]["stepName"]
+        data = dict(sorted(data.items(), key=get_step_name))
+
+        # There are multiple steps
+        # Obtain the results for each step
+        result_dicts = [v for k, v in data.items()]
+        results = [dct["expval"]["list"] for dct in result_dicts]
+
+        results = self.insert_identity_res_batch(results, empty_obs_list, identity_indices)
+        results = [self._asarray(res) for res in results]
+
+        return results
