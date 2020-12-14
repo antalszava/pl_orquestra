@@ -188,57 +188,6 @@ class TestBaseDevice:
             res = circuit()
             assert np.allclose(res, np.array([1, test_batch_res0]))
 
-    @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
-    def test_identity_multiple_tape(self, dev, tmpdir, monkeypatch):
-        """Test computing the expectation value of the identity for multiple
-        return values."""
-        qml.enable_tape()
-
-        dev = qml.device(dev, wires=2, keep_files=True)
-
-        with qml.tape.QuantumTape() as tape1:
-            qml.RX(0.133, wires=0)
-            qml.expval(qml.Identity(wires=[0]))
-
-        with qml.tape.QuantumTape() as tape2:
-            qml.RX(0.432, wires=0)
-            qml.expval(qml.Identity(wires=[0]))
-            qml.expval(qml.Identity(wires=[1]))
-
-        circuits = [tape1, tape2]
-
-        test_uuid = "1234"
-        with monkeypatch.context() as m:
-            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
-
-            # Disable submitting to the Orquestra platform by mocking Popen
-            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
-            m.setattr(
-                pennylane_orquestra.orquestra_device,
-                "loop_until_finished",
-                lambda *args, **kwargs: None,
-            )
-
-            # Disable random uuid generation
-            m.setattr(uuid, "uuid4", lambda *args: test_uuid)
-
-            res = dev.batch_execute(circuits)
-
-            # No workflow files were created because we only computed with
-            # identities
-            assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
-            assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
-
-            expected = [
-                np.ones(1),
-                np.ones(2),
-            ]
-
-            for r, e in zip(res, expected):
-                assert np.allclose(r, e)
-
-        qml.disable_tape()
-
     @pytest.mark.parametrize("resources", [None, resources_default])
     def test_got_resources(self, resources, monkeypatch):
         """Test that the resource details defined when the device was created
@@ -756,5 +705,56 @@ class TestBatchExecute:
         # Check that workflow files were either all kept or all deleted
         files_kept = file0_kept and file1_kept and file2_kept
         assert files_kept and file0_kept if keep else not files_kept
+
+        qml.disable_tape()
+
+    @pytest.mark.parametrize("dev", ["orquestra.forest", "orquestra.qiskit", "orquestra.qulacs"])
+    def test_identity_multiple_tape(self, dev, tmpdir, monkeypatch):
+        """Test computing the expectation value of the identity for multiple
+        return values."""
+        qml.enable_tape()
+
+        dev = qml.device(dev, wires=2, keep_files=True)
+
+        with qml.tape.QuantumTape() as tape1:
+            qml.RX(0.133, wires=0)
+            qml.expval(qml.Identity(wires=[0]))
+
+        with qml.tape.QuantumTape() as tape2:
+            qml.RX(0.432, wires=0)
+            qml.expval(qml.Identity(wires=[0]))
+            qml.expval(qml.Identity(wires=[1]))
+
+        circuits = [tape1, tape2]
+
+        test_uuid = "1234"
+        with monkeypatch.context() as m:
+            m.setattr(pennylane_orquestra.cli_actions, "user_data_dir", lambda *args: tmpdir)
+
+            # Disable submitting to the Orquestra platform by mocking Popen
+            m.setattr(subprocess, "Popen", lambda *args, **kwargs: MockPopen())
+            m.setattr(
+                pennylane_orquestra.orquestra_device,
+                "loop_until_finished",
+                lambda *args, **kwargs: None,
+            )
+
+            # Disable random uuid generation
+            m.setattr(uuid, "uuid4", lambda *args: test_uuid)
+
+            res = dev.batch_execute(circuits)
+
+            # No workflow files were created because we only computed with
+            # identities
+            assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
+            assert not os.path.exists(tmpdir.join(f"expval-{test_uuid}.yaml"))
+
+            expected = [
+                np.ones(1),
+                np.ones(2),
+            ]
+
+            for r, e in zip(res, expected):
+                assert np.allclose(r, e)
 
         qml.disable_tape()
