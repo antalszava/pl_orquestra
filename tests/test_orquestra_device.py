@@ -714,7 +714,7 @@ class TestBatchExecute:
         return values."""
         qml.enable_tape()
 
-        dev = qml.device(dev, wires=2, keep_files=True)
+        dev = qml.device(dev, wires=2, keep_files=False)
 
         with qml.tape.QuantumTape() as tape1:
             qml.RX(0.133, wires=0)

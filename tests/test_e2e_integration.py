@@ -114,7 +114,7 @@ class TestOrquestraIntegration:
     @pytest.mark.parametrize("device_name,backend,analytic", devices)
     def test_apply_hadamard(self, device_name, backend, analytic):
         """Test a simple circuit that applies Hadamard on the first wire."""
-        dev = qml.device(device_name, wires=3, backend=backend, analytic=analytic, keep_files=True)
+        dev = qml.device(device_name, wires=3, backend=backend, analytic=analytic, keep_files=False)
 
         TOL = analytic_tol if dev.analytic else tol
 
@@ -183,7 +183,7 @@ class TestOrquestraIntegration:
             backend="statevector_simulator",
             wires=qubits,
             analytic=True,
-            keep_files=True,
+            keep_files=False,
         )
         dev2 = qml.device("default.qubit", wires=qubits, analytic=True)
 
