@@ -16,6 +16,7 @@ help:
 	@echo "  clean-docs         to delete all built documentation"
 	@echo "  test               to run the unit tests without connecting to Orquestra"
 	@echo "  test-e2e           to run the end-to-end tests that connect to Orquestra"
+	@echo "  test-steps         to run the unit tests for the steps run on Orquestra"
 	@echo "  coverage           to generate a coverage report based on the unit tests"
 
 .PHONY: install
