@@ -105,7 +105,7 @@ def gen_expval_workflow(component, backend_specs, circuits, operators, **kwargs)
                 "type": "git",
                 "parameters": {
                     "repository": "git@github.com:PennyLaneAI/pennylane-orquestra.git",
-                    "branch": "master",
+                    "branch": "main",
                 },
             },
             {
