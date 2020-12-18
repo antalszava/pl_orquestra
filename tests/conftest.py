@@ -128,7 +128,7 @@ types = ["circuit", "expval"]
 pennylane_orquestra_import = {
     "name": "pennylane_orquestra",
     "type": "git",
-    "parameters": {"repository": "git@github.com:PennyLaneAI/pennylane-orquestra.git", "branch": "master"},
+    "parameters": {"repository": "git@github.com:PennyLaneAI/pennylane-orquestra.git", "branch": "main"},
 }
 
 imports_workflow = [
